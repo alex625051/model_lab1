@@ -43,12 +43,6 @@ for n in mrange(0, Nt):
 alpha1 = 0;
 beta1 = 200
 
-#drawing
-# from PIL import Image, ImageDraw
-# im = Image.new('RGB', (Nx, 240), (254, 254, 254))
-# draw = ImageDraw.Draw(im)
-
-
 
 def get_alpha1():
     return alpha1
@@ -67,8 +61,6 @@ def get_alpfa_beta(a, b, c, U, alpha, beta, n, j):
 
 def get_U_from_PGU(alpha, beta, n, U):
     U[n + 1][Nx] = (w * cs + beta[Nx - 1]) / (1 + w - alpha[Nx - 1])
-    # U[n+1][Nx] = (beta[Nx-1]*(1-hw) + hw*cs )  / (1+alpha[Nx-1]*(hw-1))
-    # U[n+1][Nx]= (hw*cs+(1-hw) * beta[Nx-1]) / (1-(1-hw)*alpha[Nx-1])
     return U
 
 
@@ -102,10 +94,7 @@ def iteration_t(n, U):
 
 for n in mrange(0, Nt - 1):
     U = iteration_t(n=n, U=U)
-# mprint(U)
 df=pd.DataFrame(U)
-# df.plot()
-# plt.show()
 print(df)
 
 
@@ -119,13 +108,4 @@ ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(X, Y, Z)
 fig.show()
 
-# pallete=round(abs(255/Nt))
-# for i in range(0,len(U)):
-#     for i2 in range(0,len(U[i])):
-#         color=round(U[i][i2])
-#         draw.point(xy=(i2,i), fill=(color,color,200))
-# im.show()
 
-
-
-# df.to_csv('out.csv', index=0)
