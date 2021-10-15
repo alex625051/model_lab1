@@ -23,6 +23,12 @@ def mrange(start,end,step=1):
         return [n for n in range(start, end-1, step)]
     return [n for n in range(start,end+1,step)]
 
+def mcopy(matrix):
+    li=len(matrix)
+    lj=len(matrix[0])
+    newM=[[matrix[i][i2] for i2 in range(0, lj)] for i in range(0, li)]
+    return newM
+
 def norma(f,h):
     sum=0
     for fn in f:

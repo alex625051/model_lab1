@@ -86,15 +86,13 @@ def iteration_t(n, U):
     # Шаг 5 вычисление U справа налево
     for j in mrange(Nx - 1, 1, -1):
         U = get_U_nPlus1_j(alpha=alpha, beta=beta, U=U, n=n, j=j)
-    # print(alpha)
-    # print(beta)
-    # print('--------------------')
     return U
 
 
 for n in mrange(0, Nt - 1):
     U = iteration_t(n=n, U=U)
 df=pd.DataFrame(U)
+
 print(df)
 
 
