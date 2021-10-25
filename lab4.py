@@ -37,7 +37,7 @@ def get_U_Podkova( U, n, Nx,dt,dh):
     U[n + 1][Nx] =((2*dh-dt)*U[n][Nx] + dt*(U[n+1][Nx-1]+U[n][Nx-1])) / (2*dh+dt)
     return U
 
-def compare_methods(dt,dh,fig,comp,iteration):
+def compare_methods(dt,dh):
     Nx = int(Xmax / dh)
     Nt = int(tmax / dt)
 
@@ -111,20 +111,19 @@ def main():
     parameters=[]
     # формирование  пула  значений  dt и  dh  для сравнительного анализа методов.
     dts=[0.001]#
-    dhs=[0.05]#неизменно
+    dhs=[0.001]#неизменно
 
     for i in dts:
         for i2 in dhs:
             parameters.append({'dt': i, 'dh': i2})
     fig = plt.figure()
-    comp=[[], []]
 
     position = 0;
     for iteration in range(0,len(parameters)):
         position=position+1
         dt=parameters[iteration]['dt']
         dh=parameters[iteration]['dh']
-        U_NEyavnaya,U_Zet=compare_methods(dt, dh, fig,comp,iteration)
+        U_NEyavnaya,U_Zet=compare_methods(dt, dh)
 
         title=f'Схема неявный уголок. dt={dt}'
         fig,ax=draw_wave_graf(dt, dh, U_NEyavnaya, fig, ax, title,position=position)
