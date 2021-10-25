@@ -36,6 +36,7 @@ def get_U_NEyavnaya( U, n, j,dt,dh):
 
 
 def compare_methods(dt,dh,fig,comp,iteration):
+    ax=[]
     Nx = int(L / dh)
     Nt = int(T / dt)
 
@@ -67,27 +68,27 @@ def compare_methods(dt,dh,fig,comp,iteration):
 
 
 
-    # x1 = df1.columns
-    # y1 = df1.index
-    # X1,Y1 = np.meshgrid(x1,y1)
-    # Z1 = df1
-    # ax.append( fig.add_subplot(120+1+iteration, projection='3d'))
-    # ax[-1].plot_surface(X1, Y1, Z1)
-    #
-    # x2 = df2.columns
-    # y2 = df2.index
-    # X2,Y2 = np.meshgrid(x2,y2)
-    # Z2 = df2
-    # ax.append( fig.add_subplot(120+1+iteration+1, projection='3d'))
-    # ax[-1].plot_surface(X2, Y2, Z2)
-    return comp
+    x1 = df1.columns
+    y1 = df1.index
+    X1,Y1 = np.meshgrid(x1,y1)
+    Z1 = df1
+    ax.append( fig.add_subplot(120+1+iteration, projection='3d'))
+    ax[-1].plot_surface(X1, Y1, Z1)
+
+    x2 = df2.columns
+    y2 = df2.index
+    X2,Y2 = np.meshgrid(x2,y2)
+    Z2 = df2
+    ax.append( fig.add_subplot(120+1+iteration+1, projection='3d'))
+    ax[-1].plot_surface(X2, Y2, Z2)
+    return fig
 
 def main():
 
     parameters=[]
     # формирование  пула  значений  dt и  dh  для сравнительного анализа методов.
-    dts=[i/1000000 for i in range(100,10000,1000)]#
-    dhs=[i/1000000 for i in range(100,10000,1000)]#
+    dts=[0.0001]#[i/1000000 for i in range(100,10000,1000)]#
+    dhs=[0.0001]#[i/1000000 for i in range(100,10000,1000)]#
     for i in dts:
         for i2 in dhs:
             parameters.append({'dt': i, 'dh': i2})
@@ -97,37 +98,37 @@ def main():
     for iteration in range(0,len(parameters)):
         dt=parameters[iteration]['dt']
         dh=parameters[iteration]['dh']
-        comp=compare_methods(dt, dh, fig,comp,iteration)
+        fig=compare_methods(dt, dh, fig,comp,iteration)
 
-    df1=pd.DataFrame(comp[0])
-    df2=pd.DataFrame(comp[1])
-    x1 = df1['dt']
-    y1 = df1['dh']
-    Z1 = df1['U']
-    ax1=fig.add_subplot(120+1, projection='3d')
-    ax1.scatter(x1, y1, Z1)
-    ax1.set_title('Явная схема')
-    ax1.set_xlabel("dt", fontsize=9, color='blue')
-    ax1.set_ylabel("dh", fontsize=9, color='orange')
-    ax1.set_zlim([12, 17])
-
-
-    x2 = df1['dt']
-    y2 = df1['dh']
-    Z2 = df2['U']
-    ax2= fig.add_subplot(120+1+1, projection='3d')
-    ax2.scatter(x2, y2, Z2)
-    ax2.set_title('Неявная схема')
-    ax2.set_xlabel("dt", fontsize=9, color='blue')
-    ax2.set_ylabel("dh", fontsize=9, color='orange')
-    ax2.set_zlim([12, 17])
+    # df1=pd.DataFrame(comp[0])
+    # df2=pd.DataFrame(comp[1])
+    # x1 = df1['dt']
+    # y1 = df1['dh']
+    # Z1 = df1['U']
+    # ax1=fig.add_subplot(120+1, projection='3d')
+    # ax1.scatter(x1, y1, Z1)
+    # ax1.set_title('Явная схема')
+    # ax1.set_xlabel("dt", fontsize=9, color='blue')
+    # ax1.set_ylabel("dh", fontsize=9, color='orange')
+    # ax1.set_zlim([12, 17])
+    #
+    #
+    # x2 = df1['dt']
+    # y2 = df1['dh']
+    # Z2 = df2['U']
+    # ax2= fig.add_subplot(120+1+1, projection='3d')
+    # ax2.scatter(x2, y2, Z2)
+    # ax2.set_title('Неявная схема')
+    # ax2.set_xlabel("dt", fontsize=9, color='blue')
+    # ax2.set_ylabel("dh", fontsize=9, color='orange')
+    # ax2.set_zlim([12, 17])
 
 # Выводим результаты сравнений
     fig.show()
-    print(df1)
-    print(df2)
-    print(f'явная схема средняя:{df1["U"][(df1.U < 17) & (df1.U > 12)].mean()}')
-    print(f'Неявная схема средняя:{df2["U"].mean()}')
+    # print(df1)
+    # print(df2)
+    # print(f'явная схема средняя:{df1["U"][(df1.U < 17) & (df1.U > 12)].mean()}')
+    # print(f'Неявная схема средняя:{df2["U"].mean()}')
 
 
 
