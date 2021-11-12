@@ -41,3 +41,72 @@ def shodimost(sigma,delta_t,h):
     a_plus_c=2*sigma*delta_t/h**2
     b= 1+ 2*sigma*delta_t/h**2
     if a_plus_c<b:return True;
+
+from PIL import Image
+import ghostscript
+
+images=[]
+def save_as_png(canvas,fileName):
+    global images
+
+    # save postscipt image
+    canvas.postscript(file = fileName + '.eps')
+    # use PIL to convert to PNG
+    img =  Image.open (fileName + '.eps')
+    images.append(img)
+    img.save(fileName + '.png', 'png')
+
+
+from tkinter import Canvas,Tk
+def create_TK(width, height):
+    root = Tk()
+    canvas = Canvas(root, width=width, height=height)
+    canvas.pack()
+    return root, canvas
+
+
+
+def build_square(canvas,st, X,Y):
+    y = 0
+    while y < st*Y:
+        x = 0
+        while x < st*X:
+            canvas.create_rectangle(x, y, x+st, y+st, fill='#fff', outline='#000')
+            x += st
+
+        y += st
+
+def build_board(canvas, st, X,Y,x=False,y=False):
+    fill = '#FECD72'
+    outline = '#825100'
+    if x and y:
+        canvas.create_rectangle(x * st, y * st, x * st + st, y * st + st, fill=fill, outline=outline)
+
+
+    for i in range(0, X):
+        for j in range(0, Y):
+            canvas.create_rectangle(i*st, j*st, i*st + st, j*st + st, fill=fill, outline=outline)
+            # fill, outline = outline, fill
+
+        # fill, outline = outline, fill
+
+def checkers(root, canvas, st, X, Y,board=False):
+    minor=st*0.95
+    canvas.delete("all")
+    build_board(canvas, st, X,Y)
+    # A - белые, B - черные
+
+    # mprint(board)
+    outline = '#000'
+
+    for i in range(Y):
+        for j in range(X):
+            value = board[i][j]
+            if value == "":
+                continue
+
+            color = 'white' if value == "A" else 'black'
+
+            x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
+            canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
+    root.update()
