@@ -22,6 +22,7 @@ from PIL import Image
 images=[]
 def save_as_png(canvas,fileName):
     global images
+
     # save postscipt image
     canvas.postscript(file = fileName + '.eps')
     # use PIL to convert to PNG
@@ -183,10 +184,12 @@ for i in mrange(1,T): # Проходим Т шагов, отображаем к�
     board, t = move_cell(board=board, t=t)
     root.title(f'Метод Монте-Карло. t={t}, step={i}')
     checkers(board=board)
-    if i%10==0:
+    if i%1==0:
+        canvas.create_text(250, 20, fill="black", font="Times 30 italic bold",
+                           text=f"t={t}, step={i}")
         save_as_png(canvas=canvas, fileName=f'out/{i}')
 
-images[0].save('out/monte_Carlo4.gif',
+images[0].save('out/monte_Carlo1.gif',
                save_all=True,
                append_images=images[1:],
                duration=1000,
