@@ -15,7 +15,7 @@ nol0=decimal.Decimal('0')
 X = 20;
 Y = 20;
 T = 300;
-Nco=X*Y*1.0
+Nco=X*Y*0.0
 No=X*Y*0.0
 Pco=decimal.Decimal('0.3');k1_=decimal.Decimal('10000');k1=decimal.Decimal(Pco*k1_);
 k1minus=decimal.Decimal('300')
@@ -97,6 +97,44 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
             ret['y2x2']="[O]v" #
             return [ret]
 
+# ### TEST!!!
+#     elif board[y][x] == '*':
+#         if board[y2][x2] == '*':
+#             ret['speed'] = k2  #
+#             ret['yx'] = "[O]"  #
+#             ret['y2x2'] = "[O]"  #
+#             return [ret]
+#
+#     elif board[y][x]=='[O]':
+#         if board[y2][x2]=='[CO]':
+#             ret['speed']=k3  #
+#             ret['yx']="*" #
+#             ret['y2x2']="*" #
+#             return [ret]
+#
+#     elif board[y][x]=='[O]v':
+#         if board[y2][x2]=='[CO]':
+#             ret['speed']=k5  #
+#             ret['yx']="*" #
+#             ret['y2x2']="*" #
+#             return [ret]
+#
+#     if board[y][x]=='*':
+#         if board[y2][x2]=='[CO]':
+#             ret['speed']=k6  #
+#             ret['yx']="[CO]" #
+#             ret['y2x2']="*" #
+#             return [ret]
+#         elif board[y2][x2]=='[O]':
+#             ret['speed']=k7  #
+#             ret['yx']="[O]" #
+#             ret['y2x2']="*" #
+#             return [ret]
+#         elif board[y2][x2]=='[O]v"':
+#             ret['speed']=k8  #
+#             ret['yx']="[O]v"#
+#             ret['y2x2']="*" #
+#             return [ret]
     return []
 
 #
@@ -112,16 +150,55 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
 #             print(f'rand={rand}, event={ev["speed"]}, left={ev_number-ev["speed"]}, right={ev_number}, R={R} ({type(R)})')
 #             return ev
 
-def get_r_event(events,R): #method 2 (Линейный поиск (выбор) события)
-    Ep_minus1=nol0
-    E=decimal.Decimal(str(numpy.random.uniform()))
-    for ev in events:
+# def get_r_event(events,R): #method 2 (Линейный поиск (выбор) события)
+#     Ep_minus1=nol0
+#     E=decimal.Decimal(str(numpy.random.uniform()))
+#     for ev in events:
+#         # if ev['speed']==0:continue;
+#         if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
+#             # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
+#             # print(events)
+#             return ev
+#         Ep_minus1=Ep_minus1+ev['speed']
+
+def get_r_event(events,R,first_line_events):
+    Ep_minus2 = nol0
+    Ep_minus1 = nol0
+    position=False
+    E = decimal.Decimal(str(numpy.random.uniform()))
+    l=random.randint(0,len(first_line_events)-1)
+    position_events=first_line_events[l]['events_']
+    R_=first_line_events[l]['R_']
+    # print(position_events)
+    for ev in position_events:
+        # if ev['speed']==0:continue;
+        if (E*R_>Ep_minus1) and ((E*R_)<=(Ep_minus1+ev['speed'])):
+            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
+            # print(events)
+            return ev
+        Ep_minus1=Ep_minus1+ev['speed']
+    return False
+
+
+
+    # print(first_line_events)
+    for evl in first_line_events:
+        if (E*R>Ep_minus2) and ((E*R)<=(Ep_minus2+evl['R_'])):
+            # print(f'rand={E*R}, event={evl["R_"]}, left={Ep_minus2}, right={Ep_minus2+evl["R_"]}, R={R}')
+            # print(events)
+            position=evl
+            break
+        Ep_minus1=Ep_minus2+evl['R_']
+
+    for ev in position['events_']:
         # if ev['speed']==0:continue;
         if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
             # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
             # print(events)
             return ev
         Ep_minus1=Ep_minus1+ev['speed']
+
+
 
 def get_event_1(x,y,board): #получить события для одного узла
     # new_board=mcopy(board)
@@ -166,8 +243,7 @@ def inv_1_point(i,j,board):
     for i in down:R_=R_+i['speed']
     for i in down2:R_=R_+i['speed']
     for i in this_point:R_=R_+i['speed']
-    # R_ = R_ + left['speed'] + right['speed'] + right2['speed'] + up['speed'] + down['speed'] + down2['speed'] + \
-    #     this_point['speed']
+
 
     # добавляем события. будут и с 0 вероятностью
     events=events+left
@@ -185,6 +261,7 @@ def move_cell(board,t):
     # Вычисление скоростей элементарных событий. На текущий момент времени t1 и вычисление суммарной скорости R
     R=nol0;
     events=[]
+    first_line_events=[]
     for i in prange(Y):
         for j in prange(X):
             value = board[i][j]
@@ -192,12 +269,14 @@ def move_cell(board,t):
             # events_=[i  for i in events_ if i['speed']>0]
             events=events+events_
             R=R+R_
+            if R_>0:
+                first_line_events.append({'i':i, 'j':j, 'R_':R_, 'events_':events_})
 
 
     # print(events)
     #шаг 3 Случайно выбирается одно из возможных элементарных событий с вероятностью, пропорциональной его скорости.
     # Изменяется состояние решётки в соответствии с выбранным событием
-    ev = get_r_event(events=events, R=R)
+    ev = get_r_event(events=events, R=R, first_line_events=first_line_events)
     # шаг 4 Вычисление шага по времени. Вычисляется момент времени t2 выхода системы
     # из текущего состояния: t2=t1-ln(E)/R, где E - случайная величина, равномерно распределённая на интервале (0,1).
     E=decimal.Decimal(str(random.random()))
