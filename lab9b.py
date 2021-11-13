@@ -21,6 +21,13 @@ k6=10**5
 k7=k6
 k8=k6
 
+#создадим список для многопоточного задания
+mt_list=[]
+for i in range(Y):
+    for j in range(X):
+        mt_list.append({'j':j,'i':i})
+
+
 
 def get_event_2x2(x, y, dx, dy, board):  # Исследование 1 варианта развития событий при 2 узлах на 2 стороны
     new_board = mcopy(board)
@@ -133,7 +140,7 @@ def inv_1_point(i,j,board):
     events.append(down2)
     events.append(right2)
     events.append(this_point)
-    return events, R
+    return {'events':events, 'R':R}
 
 
 def move_cell(board,t):
@@ -141,13 +148,22 @@ def move_cell(board,t):
     # Вычисление скоростей элементарных событий. На текущий момент времени t1 и вычисление суммарной скорости R
     R=0;
     events=[]
-    for i in range(Y):
-        for j in range(X):
-            value = board[i][j]
-            events_,R_ = inv_1_point(i,j,board)
-            # events_=[i  for i in events_ if i['speed']>0]
-            events=events+events_
-            R=R+R_
+    # Многопоточный режим
+    with pool.ThreadPoolExecutor(max_workers=18) as executer:
+        # в метод map передаем функцию
+        # worker()  и данные для обработки
+        res = executer.map(lambda ob:inv_1_point(i=ob['i'],j=ob['j'],board=board), mt_list)
+    result = list(res)
+    for res in result:
+        R=R+res['R']
+        events=events+res['events']
+    # for i in range(Y):
+    #     for j in range(X):
+    #         value = board[i][j]
+    #         events_,R_ = inv_1_point(i,j,board)
+    #         # events_=[i  for i in events_ if i['speed']>0]
+    #         events=events+events_
+    #         R=R+R_
 
 
 
