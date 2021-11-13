@@ -4,6 +4,8 @@ import random
 from service import *
 import math
 import ghostscript
+import concurrent.futures as pool
+import threading, time
 
 # Вводные данные
 X = 20;
@@ -103,6 +105,36 @@ def get_event_1(x,y,board): #получить события для одного
     ret['board']=mcopy(new_board)
     return ret
 
+def inv_1_point(i,j,board):
+    R=0;
+    events=[]
+    # генерация скоростей для 4 направлений, добавлених в список событий и подсчет R
+    # проверяем на все 4 направления=> обратные реакции учитываются, когда относительно следующей точки происходит проверка
+    left = get_event_2x4(x=j, y=i, dx=-1, dy=0, board=board)
+    right = get_event_2x4(x=j, y=i, dx=+1, dy=0, board=board)
+    up = get_event_2x4(x=j, y=i, dx=0, dy=-1, board=board)
+    down = get_event_2x4(x=j, y=i, dx=0, dy=+1, board=board)
+
+    # узлы одинаковые - необходимо только 1 раз учитывать
+    down2 = get_event_2x2(x=j, y=i, dx=0, dy=+1, board=board)
+    right2 = get_event_2x2(x=j, y=i, dx=+1, dy=0, board=board)
+
+    # смотрим сам узел
+    this_point = get_event_1(x=j, y=i, board=board)
+
+    R = R + left['speed'] + right['speed'] + right2['speed'] + up['speed'] + down['speed'] + down2['speed'] + \
+        this_point['speed']
+
+    # добавляем события. будут и с 0 вероятностью
+    events.append(left)
+    events.append(right)
+    events.append(up)
+    events.append(down)
+    events.append(down2)
+    events.append(right2)
+    events.append(this_point)
+    return events, R
+
 
 def move_cell(board,t):
     #шаг 2
@@ -112,41 +144,16 @@ def move_cell(board,t):
     for i in range(Y):
         for j in range(X):
             value = board[i][j]
-
-             #генерация скоростей для 4 направлений, добавлених в список событий и подсчет R
-            # проверяем на все 4 направления=> обратные реакции учитываются, когда относительно следующей точки происходит проверка
-            left=get_event_2x4(x=j,y=i,dx=-1,dy=0,board=board)
-            right=get_event_2x4(x=j,y=i,dx=+1,dy=0,board=board)
-            up=get_event_2x4(x=j,y=i,dx=0,dy=-1,board=board)
-            down=get_event_2x4(x=j,y=i,dx=0,dy=+1,board=board)
-
-            #узлы одинаковые - необходимо только 1 раз учитывать
-            down2=get_event_2x2(x=j,y=i,dx=0,dy=+1,board=board)
-            right2=get_event_2x2(x=j,y=i,dx=+1,dy=0,board=board)
-
-            #смотрим сам узел
-            this_point=get_event_1(x=j,y=i,board=board)
-
-            R=R+left['speed']+right['speed']+right2['speed']+up['speed']+down['speed']+down2['speed']+this_point['speed']
-
-            #добавляем события. будут и с 0 вероятностью
-            events.append(left)
-            events.append(right)
-            events.append(up)
-            events.append(down)
-            events.append(down2)
-            events.append(right2)
-            events.append(this_point)
+            events_,R_ = inv_1_point(i,j,board)
+            # events_=[i  for i in events_ if i['speed']>0]
+            events=events+events_
+            R=R+R_
 
 
 
     #шаг 3 Случайно выбирается одно из возможных элементарных событий с вероятностью, пропорциональной его скорости.
     # Изменяется состояние решётки в соответствии с выбранным событием
     ev = get_r_event(events=events, R=R)
-    print(ev['speed'])
-    # board[ev['y']][ev['x']]=""
-    # board[ev['y2']][ev['x2']]=ev['c2']
-    # time.sleep(0.01)
 
     # шаг 4 Вычисление шага по времени. Вычисляется момент времени t2 выхода системы
     # из текущего состояния: t2=t1-ln(E)/R, где E - случайная величина, равномерно распределённая на интервале (0,1).
@@ -181,13 +188,17 @@ def main():
 
     i=0
     while t<=T: # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
+        tt1=time.time()
         i=i+1
         board, t = move_cell(board=board, t=t)
 # конец работы основного алгоритма ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
         # Формирование кадров демонстрационой анимации
-        root.title(f'Метод Монте-Карло. t={t}, step={i}')
-        checkers2(root, canvas, st, X, Y,board=board)
+        if i%10==0:
+            root.title(f'Метод Монте-Карло. t={t}, step={i}')
+            checkers2(root, canvas, st, X, Y,board=board)
+            print(time.time()-tt1)
         if i%100==0:
             canvas.create_text(250, 20, fill="black", font="Times 30 italic bold",
                                text=f"t={t}, step={i}")
