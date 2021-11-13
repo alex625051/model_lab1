@@ -15,7 +15,7 @@ nol0=decimal.Decimal('0')
 X = 20;
 Y = 20;
 T = 300;
-Nco=X*Y*0.0
+Nco=X*Y*0.5
 No=X*Y*0.0
 Pco=decimal.Decimal('0.3');k1_=decimal.Decimal('10000');k1=decimal.Decimal(Pco*k1_);
 k1minus=decimal.Decimal('300')
@@ -164,12 +164,23 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
 def get_r_event(events,R,first_line_events):
     Ep_minus2 = nol0
     Ep_minus1 = nol0
-    position=False
     E = decimal.Decimal(str(numpy.random.uniform()))
     l=random.randint(0,len(first_line_events)-1)
-    position_events=first_line_events[l]['events_']
-    R_=first_line_events[l]['R_']
-    # print(position_events)
+
+    for ev in first_line_events:
+        # if ev['speed']==0:continue;
+        if (E*R>Ep_minus2) and ((E*R)<=(Ep_minus2+ev['R_'])):
+            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
+            # print(events)
+            first_line_event = ev
+            break
+        Ep_minus2=Ep_minus2+ev['R_']
+
+
+
+
+    position_events=first_line_event['events_']
+    R_=first_line_event['R_']
     for ev in position_events:
         # if ev['speed']==0:continue;
         if (E*R_>Ep_minus1) and ((E*R_)<=(Ep_minus1+ev['speed'])):
@@ -179,24 +190,6 @@ def get_r_event(events,R,first_line_events):
         Ep_minus1=Ep_minus1+ev['speed']
     return False
 
-
-
-    # print(first_line_events)
-    for evl in first_line_events:
-        if (E*R>Ep_minus2) and ((E*R)<=(Ep_minus2+evl['R_'])):
-            # print(f'rand={E*R}, event={evl["R_"]}, left={Ep_minus2}, right={Ep_minus2+evl["R_"]}, R={R}')
-            # print(events)
-            position=evl
-            break
-        Ep_minus1=Ep_minus2+evl['R_']
-
-    for ev in position['events_']:
-        # if ev['speed']==0:continue;
-        if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
-            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-            # print(events)
-            return ev
-        Ep_minus1=Ep_minus1+ev['speed']
 
 
 
