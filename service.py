@@ -1,3 +1,4 @@
+import os
 def mprint(m1):
     m = [[i2 for i2 in i] for i in m1]
     l=[0 for i in range(0,len(m[0]))]
@@ -53,8 +54,10 @@ def save_as_png(canvas,fileName):
     canvas.postscript(file = fileName + '.eps')
     # use PIL to convert to PNG
     img =  Image.open (fileName + '.eps')
-    images.append(img)
-    img.save(fileName + '.png', 'png')
+    temp = img.copy()
+    images.append(temp)
+    img.close()
+    os.remove(fileName + '.eps')
 
 
 from tkinter import Canvas,Tk
@@ -106,6 +109,29 @@ def checkers(root, canvas, st, X, Y,board=False):
                 continue
 
             color = 'white' if value == "A" else 'black'
+
+            x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
+            canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
+    root.update()
+
+def checkers2(root, canvas, st, X, Y,board=False):
+    minor=st*0.95
+    canvas.delete("all")
+    build_board(canvas, st, X,Y)
+    # * - пустые, [O] - синие, [CO] - черные, [O]v - зеленые
+
+    # mprint(board)
+    outline = '#000'
+
+    for i in range(Y):
+        for j in range(X):
+            value = board[i][j]
+            if value == "*":
+                continue
+
+            if value=="[O]":color='blue'
+            elif value=="[CO]":color='black'
+            elif value=="[O]v":color='green'
 
             x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
             canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
