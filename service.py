@@ -1,34 +1,33 @@
 import os
-from numba import njit, prange
 def mprint(m1):
     m = [[i2 for i2 in i] for i in m1]
-    l=[0 for i in prange(0,len(m[0]))]
-    for i in prange(0,len(m)):
-        for i2 in prange(0,len(m[i])):
+    l=[0 for i in range(0,len(m[0]))]
+    for i in range(0,len(m)):
+        for i2 in range(0,len(m[i])):
             m[i][i2]=str(m[i][i2])
             ll=len(m[i][i2])
             if ll>l[i2]:
                 l[i2]=ll;
-    for i in prange(0,len(m)):
-        for i2 in prange(0,len(m[i])):
+    for i in range(0,len(m)):
+        for i2 in range(0,len(m[i])):
             ll = len(m[i][i2])
             if ll < l[i2]:
                 a=l[i2]-ll
                 m[i][i2]=m[i][i2]+' '*a
-    for i in prange(0,len(m)):
-        for i2 in prange(0,len(m[i])):
+    for i in range(0,len(m)):
+        for i2 in range(0,len(m[i])):
             print(m[i][i2], end=" | ")
         print("")
 
 def mrange(start,end,step=1):
     if step<0:
-        return [n for n in prange(start, end-1, step)]
-    return [n for n in prange(start,end+1,step)]
+        return [n for n in range(start, end-1, step)]
+    return [n for n in range(start,end+1,step)]
 
 def mcopy(matrix):
     li=len(matrix)
     lj=len(matrix[0])
-    newM=[[matrix[i][i2] for i2 in prange(0, lj)] for i in prange(0, li)]
+    newM=[[matrix[i][i2] for i2 in range(0, lj)] for i in range(0, li)]
     return newM
 
 def norma(f,h):
@@ -87,8 +86,8 @@ def build_board(canvas, st, X,Y,x=False,y=False):
         canvas.create_rectangle(x * st, y * st, x * st + st, y * st + st, fill=fill, outline=outline)
 
 
-    for i in prange(0, X):
-        for j in prange(0, Y):
+    for i in range(0, X):
+        for j in range(0, Y):
             canvas.create_rectangle(i*st, j*st, i*st + st, j*st + st, fill=fill, outline=outline)
             # fill, outline = outline, fill
 
@@ -103,8 +102,8 @@ def checkers(root, canvas, st, X, Y,board=False):
     # mprint(board)
     outline = '#000'
 
-    for i in prange(Y):
-        for j in prange(X):
+    for i in range(Y):
+        for j in range(X):
             value = board[i][j]
             if value == "":
                 continue
@@ -126,8 +125,8 @@ def checkers2(root, canvas, st, X, Y,board=False):
     # mprint(board)
     outline = '#000'
 
-    for i in prange(Y):
-        for j in prange(X):
+    for i in range(Y):
+        for j in range(X):
             value = board[i][j]
             if value == "*":
                 continue
@@ -136,6 +135,34 @@ def checkers2(root, canvas, st, X, Y,board=False):
             elif value=="[CO]":
                 color='black';CO=CO+1
             elif value=="[O]v":color='green'
+
+            x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
+            canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
+    print(CO/all)
+    root.update()
+
+
+def checkers3(root, canvas, st, X, Y,board=False):
+    all=X*Y
+    CO=0
+    minor=st*0.95
+    canvas.delete("all")
+    build_board(canvas, st, X,Y)
+    # 0 - пустые, 16 - [O] - синие, 1416 - [CO] - черные, 165 - [O]v - зеленые
+
+    # mprint(board)
+    outline = '#000'
+
+    for i in range(Y):
+        for j in range(X):
+            value = board[i][j]
+            if value == 0:
+                continue
+
+            if value==16:color='blue'
+            elif value==1416:
+                color='black';CO=CO+1
+            elif value==165:color='green'
 
             x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
             canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)

@@ -9,11 +9,13 @@ import copy
 import multiprocessing
 import decimal
 import numpy
+import concurrent.futures as pool
+
 
 # Вводные данные
 nol0=decimal.Decimal('0')
-X = 10;
-Y = 10;
+X = 20;
+Y = 20;
 T = 300;
 Nco=X*Y*0.0
 No=X*Y*0.0
@@ -27,6 +29,28 @@ k6=decimal.Decimal('100000')
 k7=k6
 k8=k6
 
+speeds_dict={}
+for i in prange(Y):
+    for j in prange(X):
+        speeds_dict[f'{i}_{j}']={'i':i,'j':j}
+
+def start_status():
+    board=[['*' for i2 in prange(X)] for i in prange(Y)]
+    CO=0
+    O=0
+    while CO < Nco:
+        x = random.randint(0, X - 1)
+        y = random.randint(0, Y - 1)
+        if board[y][x] == "*":
+            CO = CO + 1
+            board[y][x] = "[CO]"
+    while (O < No) and ((O+CO)<X*Y):
+        x = random.randint(0, X - 1)
+        y = random.randint(0, Y - 1)
+        if board[y][x] == "*":
+            O = O + 1
+            board[y][x] = "[O]"
+    return board
 
 def get_event_2x2(x, y, dx, dy, board):  # Исследование 1 варианта развития событий при 2 узлах в 2 стороны
     # new_board = mcopy(board)
@@ -137,29 +161,6 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
             return [ret]
     return []
 
-#
-
-
-# def get_r_event(events,R): #method 1 (метлод отрезков)
-#     rand=random.uniform(float('0.00000001'), float(str(R)))
-#     ev_number=nol0;
-#     for ev in events:# возвращаем событие, на отрезке которого выпало случайное число
-#         if ev['speed']==0:continue;
-#         ev_number=ev_number+ev['speed']
-#         if (rand<ev_number) and (rand>(ev_number-ev['speed'])):
-#             print(f'rand={rand}, event={ev["speed"]}, left={ev_number-ev["speed"]}, right={ev_number}, R={R} ({type(R)})')
-#             return ev
-
-# def get_r_event(events,R): #method 2 (Линейный поиск (выбор) события)
-#     Ep_minus1=nol0
-#     E=decimal.Decimal(str(numpy.random.uniform()))
-#     for ev in events:
-#         # if ev['speed']==0:continue;
-#         if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
-#             # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-#             # print(events)
-#             return ev
-#         Ep_minus1=Ep_minus1+ev['speed']
 
 def get_r_event(events,R,first_line_events):
     Ep_minus2 = nol0
@@ -265,21 +266,42 @@ def inv_1_point(i,j,board):
     return events, R_
 
 
-def move_cell(board,t):
+def move_cell(board,t,changed_points):
+    global speeds_dict
     #шаг 2
     # Вычисление скоростей элементарных событий. На текущий момент времени t1 и вычисление суммарной скорости R
     R=nol0;
     events=[]
     first_line_events=[]
-    for i in prange(Y):
-        for j in prange(X):
-            value = board[i][j]
-            events_,R_ = inv_1_point(i,j,board)
+
+
+    if changed_points:
+        for point in changed_points:
+            i=point['y']
+            j=point['x']
+            events_, R_ = inv_1_point(i, j, board)
             # events_=[i  for i in events_ if i['speed']>0]
-            events=events+events_
-            R=R+R_
-            if R_>0:
-                first_line_events.append({'i':i, 'j':j, 'R_':R_, 'events_':events_})
+            events = events + events_
+            # R = R + R_
+            speeds_dict[f'{i}_{j}']['R_'] = R_;
+            speeds_dict[f'{i}_{j}']['events_'] = events_;
+
+
+    if not changed_points:
+        for i in prange(Y):
+            for j in prange(X):
+                value = board[i][j]
+                events_,R_ = inv_1_point(i,j,board)
+                # events_=[i  for i in events_ if i['speed']>0]
+                events=events+events_
+                # R=R+R_
+                speeds_dict[f'{i}_{j}']['R_']=R_;
+                speeds_dict[f'{i}_{j}']['events_']=events_;
+
+    for k in speeds_dict:
+        if speeds_dict[k]['R_']>0:
+            R = R + speeds_dict[k]['R_']
+            first_line_events.append({'i': speeds_dict[k]['i'], 'j': speeds_dict[k]['j'], 'R_': speeds_dict[k]['R_'], 'events_': speeds_dict[k]['events_']})
 
 
     # print(events)
@@ -295,33 +317,45 @@ def move_cell(board,t):
     dt=-decimal.Decimal(str(math.log(E)))/R
     t=t+dt
     board[ev['y']][ev['x']]=ev['yx']
+
+    def get_near_points(x,y):
+        x1 = x + 1
+        y1 = y + 0
+        x2 = x - 1
+        y2 = y + 0
+        x3 = x + 0
+        y3 = y + 1
+        x4 = x + 0
+        y4 = y - 1
+        if x1==X: x1=0
+        if x2<0: x2=X-1
+        if y3==Y: y3=0;
+        if y4 <0: y4=Y-1
+        return [{'x':x1,'y':y1},{'x':x2,'y':y2},{'x':x3,'y':y3},{'x':x4,'y':y4}]
+
+
+
+    def get_changed_points(ev):
+        points=[]
+        points=points+get_near_points(x=ev['x'],y=ev['y'])
+        if ev.get('y2x2'):
+            points = points + get_near_points(x=ev['x2'], y=ev['y2'])
+        else:
+            points = points +[{'x':ev['x'],'y':ev['y']}]
+
+        return points
+
     if ev.get('y2x2'):
         board[ev['y2']][ev['x2']] = ev['y2x2']
 
-    return board,t
+    changed_points=get_changed_points(ev)
 
+    return board,t, changed_points
 
-def start_status():
-    board=[['*' for i2 in prange(X)] for i in prange(Y)]
-    CO=0
-    O=0
-    while CO < Nco:
-        x = random.randint(0, X - 1)
-        y = random.randint(0, Y - 1)
-        if board[y][x] == "*":
-            CO = CO + 1
-            board[y][x] = "[CO]"
-    while (O < No) and ((O+CO)<X*Y):
-        x = random.randint(0, X - 1)
-        y = random.randint(0, Y - 1)
-        if board[y][x] == "*":
-            O = O + 1
-            board[y][x] = "[O]"
-    return board
 
 def main():
     t = nol0
-
+    changed_points=[]
     # Рисовка объектов
     st = (700 * 2) / (X + Y)
 
@@ -336,13 +370,13 @@ def main():
 
     #отрисовка частиц в начальном состоянии и сохранение кадра визуализации
     checkers2(root, canvas, st, X, Y,board=board)
-    save_as_png(canvas=canvas, fileName=f'out/00')
+    # save_as_png(canvas=canvas, fileName=f'out/00')
 
     i=0
     while t<=300: # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
         # tt1=time.time()
         i=i+1
-        board, t = move_cell(board=board, t=t)
+        board, t, changed_points = move_cell(board=board, t=t, changed_points=changed_points)
 # конец работы основного алгоритма ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
@@ -358,11 +392,11 @@ def main():
         #     save_as_png(canvas=canvas, fileName=f'out/{i}')
 
     #Формирование файла демонстрационой анимации
-    images[0].save('out/KMK_Kurkina.gif',
-                   save_all=True,
-                   append_images=images[1:],
-                   duration=1000,
-                   loop=0)
+    # images[0].save('out/KMK_Kurkina.gif',
+    #                save_all=True,
+    #                append_images=images[1:],
+    #                duration=1000,
+    #                loop=0)
 
     root.mainloop()
 
