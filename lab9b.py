@@ -51,10 +51,10 @@ def get_event_2x2(x, y, dx, dy, board):  # Исследование 1 вариа
 
     return []
 
-
+@njit(nopython=False)
 def get_event_2x4(x,y,dx,dy,board): # Исследование 1 варианта развития событий при 2 узлах на 4 стороны
     # new_board=mcopy(board)
-    ret={'speed':nol0}
+    ret={'speed':0}
     x2=x+dx
     y2=y+dy
     if x2==X:x2=0;
@@ -68,73 +68,73 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
 
     if board[y][x]=='[CO]':
         if board[y2][x2]=='[O]':
-            ret['speed']=k3  #
+            ret['speed']=25000#k3  #
             ret['yx']="*" #
             ret['y2x2']="*" #
             return [ret]
         elif board[y2][x2]=='[O]v':
-            ret['speed']=k5  #
+            ret['speed']=0.0065#k5  #
             ret['yx']="*" #
             ret['y2x2']="*" #
             return [ret]
         elif board[y2][x2]=='*':
-            ret['speed']=k6  #
+            ret['speed']=100003k6  #
             ret['yx']="*" #
             ret['y2x2']="[CO]" #
             return [ret]
 
     elif board[y][x]=='[O]':
         if board[y2][x2]=='*':
-            ret['speed']=k7  #
+            ret['speed']=10000#k7  #
             ret['yx']="*" #
             ret['y2x2']="[O]" #
             return [ret]
 
     elif board[y][x]=='[O]v':
         if board[y2][x2]=='*':
-            ret['speed']=k8  #
+            ret['speed']=10000#k8  #
             ret['yx']="*" #
             ret['y2x2']="[O]v" #
             return [ret]
 
-# ### TEST!!!
-#     elif board[y][x] == '*':
-#         if board[y2][x2] == '*':
-#             ret['speed'] = k2  #
-#             ret['yx'] = "[O]"  #
-#             ret['y2x2'] = "[O]"  #
-#             return [ret]
-#
-#     elif board[y][x]=='[O]':
-#         if board[y2][x2]=='[CO]':
-#             ret['speed']=k3  #
-#             ret['yx']="*" #
-#             ret['y2x2']="*" #
-#             return [ret]
-#
-#     elif board[y][x]=='[O]v':
-#         if board[y2][x2]=='[CO]':
-#             ret['speed']=k5  #
-#             ret['yx']="*" #
-#             ret['y2x2']="*" #
-#             return [ret]
-#
-#     if board[y][x]=='*':
-#         if board[y2][x2]=='[CO]':
-#             ret['speed']=k6  #
-#             ret['yx']="[CO]" #
-#             ret['y2x2']="*" #
-#             return [ret]
-#         elif board[y2][x2]=='[O]':
-#             ret['speed']=k7  #
-#             ret['yx']="[O]" #
-#             ret['y2x2']="*" #
-#             return [ret]
-#         elif board[y2][x2]=='[O]v"':
-#             ret['speed']=k8  #
-#             ret['yx']="[O]v"#
-#             ret['y2x2']="*" #
-#             return [ret]
+### TEST!!!
+    elif board[y][x] == '*':
+        if board[y2][x2] == '*':
+            ret['speed'] = 10000#k2  #
+            ret['yx'] = "[O]"  #
+            ret['y2x2'] = "[O]"  #
+            return [ret]
+
+    elif board[y][x]=='[O]':
+        if board[y2][x2]=='[CO]':
+            ret['speed']=25000#k3  #
+            ret['yx']="*" #
+            ret['y2x2']="*" #
+            return [ret]
+
+    elif board[y][x]=='[O]v':
+        if board[y2][x2]=='[CO]':
+            ret['speed']=0.0065#k5  #
+            ret['yx']="*" #
+            ret['y2x2']="*" #
+            return [ret]
+
+    if board[y][x]=='*':
+        if board[y2][x2]=='[CO]':
+            ret['speed']=10000#k6  #
+            ret['yx']="[CO]" #
+            ret['y2x2']="*" #
+            return [ret]
+        elif board[y2][x2]=='[O]':
+            ret['speed']=10000#k7  #
+            ret['yx']="[O]" #
+            ret['y2x2']="*" #
+            return [ret]
+        elif board[y2][x2]=='[O]v"':
+            ret['speed']=10000#k8  #
+            ret['yx']="[O]v"#
+            ret['y2x2']="*" #
+            return [ret]
     return []
 
 #
@@ -166,6 +166,22 @@ def get_r_event(events,R,first_line_events):
     Ep_minus1 = nol0
     E = decimal.Decimal(str(numpy.random.uniform()))
     l=random.randint(0,len(first_line_events)-1)
+
+    for first_line_event in first_line_events:
+        position_events=first_line_event['events_']
+        for ev in position_events:
+            # if ev['speed']==0:continue;
+            if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
+                # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
+                # print(events)
+                return ev
+            Ep_minus1=Ep_minus1+ev['speed']
+    return False
+
+
+
+
+
 
     for ev in first_line_events:
         # if ev['speed']==0:continue;
@@ -223,18 +239,18 @@ def inv_1_point(i,j,board):
     down = get_event_2x4(x=j, y=i, dx=0, dy=+1, board=board)
 
     # узлы одинаковые - необходимо только 1 раз учитывать
-    down2 = get_event_2x2(x=j, y=i, dx=0, dy=+1, board=board)
-    right2 = get_event_2x2(x=j, y=i, dx=+1, dy=0, board=board)
+    # down2 = get_event_2x2(x=j, y=i, dx=0, dy=+1, board=board)
+    # right2 = get_event_2x2(x=j, y=i, dx=+1, dy=0, board=board)
 
     # смотрим сам узел
     this_point = get_event_1(x=j, y=i, board=board)
 
     for i in left:R_=R_+i['speed']
     for i in right:R_=R_+i['speed']
-    for i in right2:R_=R_+i['speed']
+    # for i in right2:R_=R_+i['speed']
     for i in up:R_=R_+i['speed']
     for i in down:R_=R_+i['speed']
-    for i in down2:R_=R_+i['speed']
+    # for i in down2:R_=R_+i['speed']
     for i in this_point:R_=R_+i['speed']
 
 
@@ -243,8 +259,8 @@ def inv_1_point(i,j,board):
     events=events+right
     events=events+up
     events=events+down
-    events=events+down2
-    events=events+right2
+    # events=events+down2
+    # events=events+right2
     events=events+this_point
     return events, R_
 
@@ -331,7 +347,7 @@ def main():
 
 
         # Формирование кадров демонстрационой анимации
-        if i%100==0:
+        if i%1000==0:
             # time.sleep(1)
             root.title(f'Метод Монте-Карло. t={t}, step={i}')
             checkers2(root, canvas, st, X, Y,board=board)
