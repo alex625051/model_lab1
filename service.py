@@ -1,4 +1,6 @@
 import os
+import json
+import decimal
 def mprint(m1):
     m = [[i2 for i2 in i] for i in m1]
     l=[0 for i in range(0,len(m[0]))]
@@ -37,6 +39,23 @@ def norma(f,h):
     sum=sum*h
     sum=sum**(1/2)
     return sum
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return f'Decimal({str(obj)})'
+        return json.JSONEncoder.default(self, obj)
+
+
+class DecimalDecoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+    def object_hook(self, obj):
+        for key in obj:
+            if isinstance(obj[key], str) and obj[key].startswith('Decimal'):
+                dec = obj[key].split('Decimal(')
+                obj[key]=decimal.Decimal(dec[1].split(')')[0])
+        return obj
 
 def shodimost(sigma,delta_t,h):
     a_plus_c=2*sigma*delta_t/h**2
@@ -114,12 +133,13 @@ def checkers(root, canvas, st, X, Y,board=False):
             canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
     root.update()
 
-def checkers2(root, canvas, st, X, Y,board=False):
+def checkers2(root, canvas, st, X, Y,board=False,visibable=False):
     all=X*Y
     CO=0
     minor=st*0.95
-    canvas.delete("all")
-    build_board(canvas, st, X,Y)
+    if visibable:
+        canvas.delete("all")
+        build_board(canvas, st, X,Y)
     # * - пустые, [O] - синие, [CO] - черные, [O]v - зеленые
 
     # mprint(board)
@@ -136,10 +156,13 @@ def checkers2(root, canvas, st, X, Y,board=False):
                 color='black';CO=CO+1
             elif value=="[O]v":color='green'
 
-            x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
-            canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
-    print(CO/all)
-    root.update()
+            if visibable:
+                x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
+                canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
+    if visibable:
+        print(CO/all)
+        root.update()
+    return CO/all
 
 
 def checkers3(root, canvas, st, X, Y,board=False):
