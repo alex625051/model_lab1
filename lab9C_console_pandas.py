@@ -8,9 +8,10 @@ import numpy
 import pandas as pd
 import json
 import os.path
+import pandas as pd
 
 
-continued=True
+continued=False
 continuedVer='1.5-green'
 # Вводные данные
 nol0=decimal.Decimal('0')
@@ -34,13 +35,10 @@ k8=k6
 R = nol0; # глобальная переменная с R
 FetaCO=[]
 
-speeds_dict={}
-for i in prange(Y):
-    for j in prange(X):
-        speeds_dict[f'{i}_{j}']={'i':i,'j':j}
+speeds_dict=numpy.array([[{'i':i,'j':j} for j in range(X)] for i in range(Y)])
 
 def start_status():
-    board=[['*' for i2 in prange(X)] for i in prange(Y)]
+    board=numpy.array([['*' for i2 in range(X)] for i in range(Y)])
     CO=0
     O=0
     Ov=0
@@ -49,19 +47,19 @@ def start_status():
         y = random.randint(0, Y - 1)
         if board[y][x] == "*":
             CO = CO + 1
-            board[y][x] = "[CO]"
+            board[y][x] = "C"
     while (O < No) and ((O+CO)<X*Y):
         x = random.randint(0, X - 1)
         y = random.randint(0, Y - 1)
         if board[y][x] == "*":
             O = O + 1
-            board[y][x] = "[O]"
+            board[y][x] = "O"
     while (Ov < Nov) and ((O+CO+Ov)<X*Y):
         x = random.randint(0, X - 1)
         y = random.randint(0, Y - 1)
         if board[y][x] == "*":
             Ov = Ov + 1
-            board[y][x] = "[O]v"
+            board[y][x] = "v"
 
     return board
 
@@ -82,8 +80,8 @@ def get_event_2x2(x, y, dx, dy, board):  # Исследование 1 вариа
     if board[y][x] == '*':
         if board[y2][x2] == '*':
             ret['speed'] = k2  #
-            ret['yx'] = "[O]"  #
-            ret['y2x2'] = "[O]"  #
+            ret['yx'] = "O"  #
+            ret['y2x2'] = "O"  #
             return [ret]
 
     return []
@@ -103,13 +101,13 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
     ret['y2'] = y2;
     ret['x2'] = x2;
 
-    if board[y][x]=="[CO]":
-        if board[y2][x2]=='[O]':
+    if board[y][x]=="C":
+        if board[y2][x2]=='O':
             ret['speed']=k3  #
             ret['yx']="*" #
             ret['y2x2']="*" #
             return [ret]
-        elif board[y2][x2]=='[O]v':
+        elif board[y2][x2]=='v':
             ret['speed']=k5  #
             ret['yx']="*" #
             ret['y2x2']="*" #
@@ -117,21 +115,21 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
         elif board[y2][x2]=='*':
             ret['speed']=k6  #
             ret['yx']="*" #
-            ret['y2x2']="[CO]" #
+            ret['y2x2']="C" #
             return [ret]
 
-    elif board[y][x]=='[O]':
+    elif board[y][x]=='O':
         if board[y2][x2]=='*':
             ret['speed']=k7  #
             ret['yx']="*" #
-            ret['y2x2']="[O]" #
+            ret['y2x2']="O" #
             return [ret]
 
-    elif board[y][x]=='[O]v':
+    elif board[y][x]=='v':
         if board[y2][x2]=='*':
             ret['speed']=k8  #
             ret['yx']="*" #
-            ret['y2x2']="[O]v" #
+            ret['y2x2']="v" #
             return [ret]
 
 
@@ -146,22 +144,18 @@ def get_r_event(R):
     ER = E * R
 
   # напрямую
-    for key in speeds_dict:
-        if speeds_dict[key]['R_']==0:continue
-        position_events=speeds_dict[key]['events_']
-        for ev in position_events:
-            # if ev['speed']==0:continue;
-            if (ER>Ep_minus1) and ((ER)<=(Ep_minus1+ev['speed'])):
-                # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-                # print(events)
-                return ev
-            Ep_minus1=Ep_minus1+ev['speed']
+    for i in speeds_dict:
+        for key in i:
+            if key['R_']==0:continue
+            position_events=key['events_']
+            for ev in position_events:
+                # if ev['speed']==0:continue;
+                if (ER>Ep_minus1) and ((ER)<=(Ep_minus1+ev['speed'])):
+                    # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
+                    # print(events)
+                    return ev
+                Ep_minus1=Ep_minus1+ev['speed']
     return False
-
-
-
-
-
 
 
 
@@ -172,15 +166,15 @@ def get_event_1(x,y,board): #получить события для одного
     ret['x'] = x;
     if board[y][x] == '*':
         ret['speed'] = k1  # Если клетка * -скорость равна k1
-        ret['yx'] = "[CO]"
+        ret['yx'] = "C"
         return [ret]
-    elif board[y][x] == '[CO]':
+    elif board[y][x] == 'C':
         ret['speed'] = k1minus  # -скорость равна k1minus
         ret['yx'] = "*"
         return [ret]
-    elif board[y][x] == '[O]':
+    elif board[y][x] == 'O':
         ret['speed'] = k4  # -скорость равна k4
-        ret['yx'] = "[O]v"
+        ret['yx'] = "v"
         return [ret]
     return []
 
@@ -237,12 +231,12 @@ def move_cell(board,t,changed_points):
             events_, R_ = inv_1_point(i, j, board)
             # events_=[i  for i in events_ if i['speed']>0]
             events = events + events_
-            R = R - speeds_dict[f'{i}_{j}']['R_']
-            speeds_dict[f'{i}_{j}']['R_'] = R_;
-            speeds_dict[f'{i}_{j}']['events_'] = events_;
+            R = R - speeds_dict[i][j]['R_']
+            speeds_dict[i][j]['R_'] = R_;
+            speeds_dict[i][j]['events_'] = events_;
 
 
-            R = R + speeds_dict[f'{i}_{j}']['R_']
+            R = R + speeds_dict[i][j]['R_']
 
 
 
@@ -254,12 +248,9 @@ def move_cell(board,t,changed_points):
                 # events_=[i  for i in events_ if i['speed']>0]
                 events=events+events_
                 R=R+R_
-                speeds_dict[f'{i}_{j}']['R_']=R_;
-                speeds_dict[f'{i}_{j}']['events_']=events_;
+                speeds_dict[i][j]['R_']=R_;
+                speeds_dict[i][j]['events_']=events_;
 
-    # for k in speeds_dict:
-    #     R = R + speeds_dict[k]['R_']
-    #         first_line_events.append({'i': speeds_dict[k]['i'], 'j': speeds_dict[k]['j'], 'R_': speeds_dict[k]['R_'], 'events_': speeds_dict[k]['events_']})
 
 
     # print(events)

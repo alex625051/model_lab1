@@ -46,6 +46,12 @@ class DecimalEncoder(json.JSONEncoder):
             return f'Decimal({str(obj)})'
         return json.JSONEncoder.default(self, obj)
 
+def decimal_decoder(obj):
+    if isinstance(obj, str) and obj.startswith('Decimal'):
+        dec = obj.split('Decimal(')
+        obj = decimal.Decimal(dec[1].split(')')[0])
+    return obj
+
 
 class DecimalDecoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
