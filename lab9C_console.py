@@ -345,8 +345,8 @@ def main():
 
 
             CO = checkers2(X=X, Y=Y, board=board, visibable=False)
-            dF=pd.DataFrame(FetaCO)
-            dF.to_csv(f'out/FetaCO_{continuedVer}.csv',index=False,mode='a',header=False)
+            # dF=pd.DataFrame(FetaCO)
+            # dF.to_csv(f'out/FetaCO_{continuedVer}.csv',index=False,mode='a',header=False)
 
             print(f't={t}, step={step}, CO={CO}')
             mprint(board)
@@ -359,13 +359,13 @@ def main():
 
 
 
-
-        elif step%1000==0:
-            # time.sleep(1)
-            # root.title(f'Метод Монте-Карло. t={t}, step={step}')
-
-            CO=checkers2(X=X, Y=Y,board=board,visibable=False)
-            FetaCO.append(CO)
+            # Не нужно так часто
+        # elif step%1000==0:
+        #     # time.sleep(1)
+        #     # root.title(f'Метод Монте-Карло. t={t}, step={step}')
+        #
+        #     CO=checkers2(X=X, Y=Y,board=board,visibable=False)
+        #     FetaCO.append(CO)
 
 
 
