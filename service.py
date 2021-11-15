@@ -133,7 +133,7 @@ def checkers(root, canvas, st, X, Y,board=False):
             canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
     root.update()
 
-def checkers2(root, canvas, st, X, Y,board=False,visibable=False):
+def checkers2(root=False, canvas=False, st=False, X=False, Y=False,board=False,visibable=False):
     all=X*Y
     CO=0
     minor=st*0.95
