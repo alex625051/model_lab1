@@ -15,27 +15,32 @@ import json
 import os.path
 
 
-continued=True
-continuedVer='1.0'
+continued=False
+showVisualDelay=1;
+unlimetedSteps=True;
+continuedVer='1.5'
 # Вводные данные
 nol0=decimal.Decimal('0')
-X = 20;
-Y = 20;
+X = 5;
+Y = 5;
 T = 300;
-Nco=X*Y*0.9999
-No=X*Y*0.0
-Nov=X*Y*0.0
-Pco=decimal.Decimal('0.3');k1_=decimal.Decimal('10000');k1=decimal.Decimal(Pco*k1_);
-k1minus=decimal.Decimal('300')
-k2=decimal.Decimal('2500')#2500
-k3=decimal.Decimal('25000')
-k4=decimal.Decimal('0.11')
-k5=decimal.Decimal('0.0065')
-k6=decimal.Decimal('100000')#100000
-k7=k6
-k8=k6
+N_I=X*Y*0.0
+N_D=X*Y*0.0
+N_F=X*Y*0.0
+k1=decimal.Decimal('0.05')/90; # H->I
+k1minus=decimal.Decimal('0.05')/90; # I->H
+k2=decimal.Decimal('1')/360; # I->D
+k4=decimal.Decimal('0.0') # I->F
+k4minus=decimal.Decimal('0.0') # F->I
+k5=decimal.Decimal('0.0') # F->H
+k7=decimal.Decimal('0.3')/90; # IH->HH
+k8=decimal.Decimal('0.4')/90; # HI->II
+k9=decimal.Decimal('0.0') # HD->ID
+k10=decimal.Decimal('0.0') # ID->DD
+k11=decimal.Decimal('0.0') # II->DI
+
 R = nol0; # глобальная переменная с R
-FetaCO=[]
+FetaD_array=[]
 
 speeds_dict={}
 for i in prange(Y):
@@ -43,28 +48,28 @@ for i in prange(Y):
         speeds_dict[f'{i}_{j}']={'i':i,'j':j}
 
 def start_status():
-    board=[['*' for i2 in prange(X)] for i in prange(Y)]
-    CO=0
-    O=0
-    Ov=0
-    while CO < Nco:
+    board=[['H' for i2 in prange(X)] for i in prange(Y)]
+    I=0
+    D=0
+    F=0
+    while I < N_I:
         x = random.randint(0, X - 1)
         y = random.randint(0, Y - 1)
-        if board[y][x] == "*":
-            CO = CO + 1
-            board[y][x] = "[CO]"
-    while (O < No) and ((O+CO)<X*Y):
+        if board[y][x] == "H":
+            I = I + 1
+            board[y][x] = "I"
+    while (D < N_D) and ((I+D)<X*Y):
         x = random.randint(0, X - 1)
         y = random.randint(0, Y - 1)
-        if board[y][x] == "*":
-            O = O + 1
-            board[y][x] = "[O]"
-    while (Ov < Nov) and ((O+CO+Ov)<X*Y):
+        if board[y][x] == "H":
+            D = D + 1
+            board[y][x] = "D"
+    while (F < N_F) and ((I+D+F)<X*Y):
         x = random.randint(0, X - 1)
         y = random.randint(0, Y - 1)
-        if board[y][x] == "*":
-            Ov = Ov + 1
-            board[y][x] = "[O]v"
+        if board[y][x] == "H":
+            F = F + 1
+            board[y][x] = "F"
 
     return board
 
@@ -82,13 +87,13 @@ def get_event_2x2(x, y, dx, dy, board):  # Исследование 1 вариа
     ret['y2'] = y2;
     ret['x2'] = x2;
 
-    if board[y][x] == '*':
-        if board[y2][x2] == '*':
-            ret['speed'] = k2  #
-            ret['yx'] = "[O]"  #
-            ret['y2x2'] = "[O]"  #
-            return [ret]
 
+    if board[y][x] == 'I':
+        if board[y2][x2] == 'I':
+            ret['speed'] = k11  #
+            ret['yx'] = "D"  #
+            ret['y2x2'] = "I"  #
+            return [ret]
     return []
 
 
@@ -106,75 +111,29 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
     ret['y2'] = y2;
     ret['x2'] = x2;
 
-    if board[y][x]=="[CO]":
-        if board[y2][x2]=='[O]':
-            ret['speed']=k3  #
-            ret['yx']="*" #
-            ret['y2x2']="*" #
+    if board[y][x] == 'H':
+        if board[y2][x2] == 'I':
+            ret['speed'] = k8  #
+            ret['yx'] = "I"  #
+            ret['y2x2'] = "I"  #
             return [ret]
-        elif board[y2][x2]=='[O]v':
-            ret['speed']=k5  #
-            ret['yx']="*" #
-            ret['y2x2']="*" #
-            return [ret]
-        elif board[y2][x2]=='*':
-            ret['speed']=k6  #
-            ret['yx']="*" #
-            ret['y2x2']="[CO]" #
+        if board[y2][x2] == 'D':
+            ret['speed'] = k9  #
+            ret['yx'] = "I"  #
+            ret['y2x2'] = "D"  #
             return [ret]
 
-    elif board[y][x]=='[O]':
-        if board[y2][x2]=='*':
-            ret['speed']=k7  #
-            ret['yx']="*" #
-            ret['y2x2']="[O]" #
+    if board[y][x] == 'I':
+        if board[y2][x2] == 'H':
+            ret['speed'] = k7  #
+            ret['yx'] = "H"  #
+            ret['y2x2'] = "H"  #
             return [ret]
-
-    elif board[y][x]=='[O]v':
-        if board[y2][x2]=='*':
-            ret['speed']=k8  #
-            ret['yx']="*" #
-            ret['y2x2']="[O]v" #
+        if board[y2][x2] == 'D':
+            ret['speed'] = k10  #
+            ret['yx'] = "D"  #
+            ret['y2x2'] = "D"  #
             return [ret]
-
-### TEST!!!
-    # elif board[y][x] == '*':
-    #     if board[y2][x2] == '*':
-    #         ret['speed'] = k2  #
-    #         ret['yx'] = "[O]"  #
-    #         ret['y2x2'] = "[O]"  #
-    #         return [ret]
-    #
-    # elif board[y][x]=='[O]':
-    #     if board[y2][x2]=='[CO]':
-    #         ret['speed']=k3  #
-    #         ret['yx']="*" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #
-    # elif board[y][x]=='[O]v':
-    #     if board[y2][x2]=='[CO]':
-    #         ret['speed']=k5  #
-    #         ret['yx']="*" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #
-    # if board[y][x]=='*':
-    #     if board[y2][x2]=='[CO]':
-    #         ret['speed']=k6  #
-    #         ret['yx']="[CO]" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #     elif board[y2][x2]=='[O]':
-    #         ret['speed']=k7  #
-    #         ret['yx']="[O]" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #     elif board[y2][x2]=='[O]v"':
-    #         ret['speed']=k8  #
-    #         ret['yx']="[O]v"#
-    #         ret['y2x2']="*" #
-    #         return [ret]
     return []
 
 
@@ -201,70 +160,20 @@ def get_r_event(R):
 
 
 
-
-
-
-
-    for first_line_event in first_line_events:
-        position_events=first_line_event['events_']
-        for ev in position_events:
-            # if ev['speed']==0:continue;
-            if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
-                # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-                # print(events)
-                return ev
-            Ep_minus1=Ep_minus1+ev['speed']
-    return False
-
-
-
-
-
-
-    for ev in first_line_events:
-        # if ev['speed']==0:continue;
-        if (E*R>Ep_minus2) and ((E*R)<=(Ep_minus2+ev['R_'])):
-            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-            # print(events)
-            first_line_event = ev
-            break
-        Ep_minus2=Ep_minus2+ev['R_']
-
-
-
-
-    position_events=first_line_event['events_']
-    R_=first_line_event['R_']
-    for ev in position_events:
-        # if ev['speed']==0:continue;
-        if (E*R_>Ep_minus1) and ((E*R_)<=(Ep_minus1+ev['speed'])):
-            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-            # print(events)
-            return ev
-        Ep_minus1=Ep_minus1+ev['speed']
-    return False
-
-
-
-
 def get_event_1(x,y,board): #получить события для одного узла
-    # new_board=mcopy(board)
-    ret={'speed':nol0}
-    ret['y'] = y;
-    ret['x'] = x;
-    if board[y][x] == '*':
-        ret['speed'] = k1  # Если клетка * -скорость равна k1
-        ret['yx'] = "[CO]"
-        return [ret]
-    elif board[y][x] == '[CO]':
-        ret['speed'] = k1minus  # -скорость равна k1minus
-        ret['yx'] = "*"
-        return [ret]
-    elif board[y][x] == '[O]':
-        ret['speed'] = k4  # -скорость равна k4
-        ret['yx'] = "[O]v"
-        return [ret]
-    return []
+    ret=[]
+    if board[y][x] == 'H':
+        ret.append({"yx": "I", "speed": k1,    "x": x, "y": y});
+
+    elif board[y][x] == 'I':
+        ret.append({"yx": "H", "speed": k1minus,    "x": x, "y": y})
+        ret.append({"yx": "D", "speed": k2,    "x": x, "y": y})
+        ret.append({"yx": "F", "speed": k4,    "x": x, "y": y});
+
+    elif board[y][x] == 'F':
+        ret.append({"yx": "H", "speed": k5,    "x": x, "y": y});
+        ret.append({"yx": "I", "speed": k4minus,    "x": x, "y": y});
+    return ret
 
 def inv_1_point(i,j,board):
     R_=nol0;
@@ -352,11 +261,13 @@ def move_cell(board,t,changed_points):
     # из текущего состояния: t2=t1-ln(E)/R, где E - случайная величина, равномерно распределённая на интервале (0,1).
     E=decimal.Decimal(str(random.random()))
     if R==0:
-        print('Нет возможных событий для текущего состояния системы')
-        exit()
+        return False
     dt=decimal.Decimal(str(math.log(1/E)))/R
     t=t+dt
-    board[ev['y']][ev['x']]=ev['yx']
+    try:
+        board[ev['y']][ev['x']]=ev['yx']
+    except:
+        return False
 
     def get_near_points(x,y):
         x1 = x + 1
@@ -414,38 +325,46 @@ def main():
         with open(f'out/present_status_{continuedVer}.json', 'r') as f:
             js=f.readlines()
             if len(js)>0:
-                present_status=json.loads( js[-1],cls=DecimalDecoder)
+                present_status=json.loads(js[-1], cls=DecimalDecoder)
                 speeds_dict=present_status['speeds_dict']
                 board=present_status['board']
                 t=present_status['t']
                 step=present_status['step']
-                CO=present_status['CO']
+                fetaD=present_status['fetaD']
 
 
     #отрисовка частиц в начальном состоянии и сохранение кадра визуализации
-    checkers2(root, canvas, st, X, Y,board=board,visibable=True)
+    checkers4(root, canvas, st, X, Y,board=board,visibable=True)
     root.title(f'Метод Монте-Карло. t={t}, step={step}')
 
     # save_as_png(canvas=canvas, fileName=f'out/00')
 
 
-    while t<=300: # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
+    while unlimetedSteps or t<=300: # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
         # tt1=time.time()
         step=step+1
-        board, t, changed_points = move_cell(board=board, t=t, changed_points=changed_points)
-# конец работы основного алгоритма ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        try:
+            board, t, changed_points = move_cell(board=board, t=t, changed_points=changed_points)
+        except:
+            print("Нет возможных событий для текущего состояния системы.\n Нажмите любую клавишу")
+            pause_var = StringVar()
+            root.bind('<Key>', lambda e: pause_var.set(1))
+            root.wait_variable(pause_var)
+            exit()
+
+        # конец работы основного алгоритма ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
         # Формирование кадров демонстрационой анимации
-        if step % 100000 == 0:
+        if step % showVisualDelay == 0:
             # time.sleep(1)
             root.title(f'Метод Монте-Карло. t={t}, step={step}')
 
-            CO = checkers2(root, canvas, st, X, Y, board=board, visibable=True)
-            dF=pd.DataFrame(FetaCO)
-            dF.to_csv(f'out/FetaCO_{continuedVer}.csv',index=False,mode='a',header=False)
+            fetaD = checkers4(root, canvas, st, X, Y, board=board, visibable=True)
+            dF=pd.DataFrame(FetaD_array)
+            dF.to_csv(f'out/FetaD_array_{continuedVer}.csv',index=False,mode='a',header=False)
             if continued:
-                present_status={'speeds_dict':speeds_dict, 'board':board,'t':t,'step':step,'CO':CO}
+                present_status={'speeds_dict':speeds_dict, 'board':board,'t':t,'step':step,'fetaD':fetaD}
                 with open(f'out/present_status_{continuedVer}.json','a') as f:
                     f.write(json.dumps(present_status,cls=DecimalEncoder)+'\n')
 
@@ -456,8 +375,8 @@ def main():
             # time.sleep(1)
             # root.title(f'Метод Монте-Карло. t={t}, step={step}')
 
-            CO=checkers2(root, canvas, st, X, Y,board=board,visibable=False)
-            FetaCO.append(CO)
+            fetaD=checkers4(root, canvas, st, X, Y,board=board,visibable=False)
+            FetaD_array.append({'fetaD':fetaD,'t':t})
             # print(time.time()-tt1)
         # if i%100==0:
         #     canvas.create_text(250, 20, fill="black", font="Times 30 italic bold",

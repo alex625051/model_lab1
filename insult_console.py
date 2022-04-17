@@ -1,30 +1,27 @@
 from tkinter import *
-import time
 import random
 from service import *
 import math
-import ghostscript
 from numba import njit, prange
-import copy
-import multiprocessing
 import decimal
 import numpy
-import concurrent.futures as pool
 import pandas as pd
 import json
 import os.path
 
 
 continued=True
-continuedVer='1.0'
+continuedVer='1.5-green'
 # Вводные данные
 nol0=decimal.Decimal('0')
 X = 20;
 Y = 20;
 T = 300;
-Nco=X*Y*0.9999
-No=X*Y*0.0
-Nov=X*Y*0.0
+# Стартовые условия для формирования волны
+Nco=X*Y*0.0
+No=X*Y*0.4
+Nov=X*Y*0.40
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Pco=decimal.Decimal('0.3');k1_=decimal.Decimal('10000');k1=decimal.Decimal(Pco*k1_);
 k1minus=decimal.Decimal('300')
 k2=decimal.Decimal('2500')#2500
@@ -137,44 +134,7 @@ def get_event_2x4(x,y,dx,dy,board): # Исследование 1 вариант�
             ret['y2x2']="[O]v" #
             return [ret]
 
-### TEST!!!
-    # elif board[y][x] == '*':
-    #     if board[y2][x2] == '*':
-    #         ret['speed'] = k2  #
-    #         ret['yx'] = "[O]"  #
-    #         ret['y2x2'] = "[O]"  #
-    #         return [ret]
-    #
-    # elif board[y][x]=='[O]':
-    #     if board[y2][x2]=='[CO]':
-    #         ret['speed']=k3  #
-    #         ret['yx']="*" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #
-    # elif board[y][x]=='[O]v':
-    #     if board[y2][x2]=='[CO]':
-    #         ret['speed']=k5  #
-    #         ret['yx']="*" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #
-    # if board[y][x]=='*':
-    #     if board[y2][x2]=='[CO]':
-    #         ret['speed']=k6  #
-    #         ret['yx']="[CO]" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #     elif board[y2][x2]=='[O]':
-    #         ret['speed']=k7  #
-    #         ret['yx']="[O]" #
-    #         ret['y2x2']="*" #
-    #         return [ret]
-    #     elif board[y2][x2]=='[O]v"':
-    #         ret['speed']=k8  #
-    #         ret['yx']="[O]v"#
-    #         ret['y2x2']="*" #
-    #         return [ret]
+
     return []
 
 
@@ -183,14 +143,13 @@ def get_r_event(R):
     Ep_minus1 = nol0
     E = decimal.Decimal(str(numpy.random.uniform()))
     # l=random.randint(0,len(first_line_events)-1)
-
+    ER = E * R
 
   # напрямую
     for key in speeds_dict:
         if speeds_dict[key]['R_']==0:continue
         position_events=speeds_dict[key]['events_']
         for ev in position_events:
-            ER=E*R
             # if ev['speed']==0:continue;
             if (ER>Ep_minus1) and ((ER)<=(Ep_minus1+ev['speed'])):
                 # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
@@ -202,47 +161,6 @@ def get_r_event(R):
 
 
 
-
-
-
-    for first_line_event in first_line_events:
-        position_events=first_line_event['events_']
-        for ev in position_events:
-            # if ev['speed']==0:continue;
-            if (E*R>Ep_minus1) and ((E*R)<=(Ep_minus1+ev['speed'])):
-                # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-                # print(events)
-                return ev
-            Ep_minus1=Ep_minus1+ev['speed']
-    return False
-
-
-
-
-
-
-    for ev in first_line_events:
-        # if ev['speed']==0:continue;
-        if (E*R>Ep_minus2) and ((E*R)<=(Ep_minus2+ev['R_'])):
-            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-            # print(events)
-            first_line_event = ev
-            break
-        Ep_minus2=Ep_minus2+ev['R_']
-
-
-
-
-    position_events=first_line_event['events_']
-    R_=first_line_event['R_']
-    for ev in position_events:
-        # if ev['speed']==0:continue;
-        if (E*R_>Ep_minus1) and ((E*R_)<=(Ep_minus1+ev['speed'])):
-            # print(f'rand={E*R}, event={ev["speed"]}, left={Ep_minus1}, right={Ep_minus1+ev["speed"]}, R={R}')
-            # print(events)
-            return ev
-        Ep_minus1=Ep_minus1+ev['speed']
-    return False
 
 
 
@@ -397,14 +315,6 @@ def main():
     t = nol0
     step=0
     changed_points=[]
-    # Рисовка объектов
-    st = (700 * 2) / (X + Y)
-
-    root, canvas = create_TK(width=st * X, height=st * Y)
-    root.title('Метод Монте-Карло. t=0')
-    #отрисовка решетки
-    build_square(canvas,st, X,Y)
-    build_board(canvas, st, X,Y)
 
     #step 1 Заполняем начальное состояние решетки
     board=start_status()
@@ -422,13 +332,6 @@ def main():
                 CO=present_status['CO']
 
 
-    #отрисовка частиц в начальном состоянии и сохранение кадра визуализации
-    checkers2(root, canvas, st, X, Y,board=board,visibable=True)
-    root.title(f'Метод Монте-Карло. t={t}, step={step}')
-
-    # save_as_png(canvas=canvas, fileName=f'out/00')
-
-
     while t<=300: # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
         # tt1=time.time()
         step=step+1
@@ -439,11 +342,16 @@ def main():
         # Формирование кадров демонстрационой анимации
         if step % 100000 == 0:
             # time.sleep(1)
-            root.title(f'Метод Монте-Карло. t={t}, step={step}')
 
-            CO = checkers2(root, canvas, st, X, Y, board=board, visibable=True)
-            dF=pd.DataFrame(FetaCO)
-            dF.to_csv(f'out/FetaCO_{continuedVer}.csv',index=False,mode='a',header=False)
+
+            CO = checkers2(X=X, Y=Y, board=board, visibable=False)
+            # dF=pd.DataFrame(FetaCO)
+            # dF.to_csv(f'out/FetaCO_{continuedVer}.csv',index=False,mode='a',header=False)
+
+            print(f't={t}, step={step}, CO={CO}')
+            mprint(board)
+            print('-------------------------------------------------------------------------------------')
+
             if continued:
                 present_status={'speeds_dict':speeds_dict, 'board':board,'t':t,'step':step,'CO':CO}
                 with open(f'out/present_status_{continuedVer}.json','a') as f:
@@ -451,27 +359,15 @@ def main():
 
 
 
+            # Не нужно так часто
+        # elif step%1000==0:
+        #     # time.sleep(1)
+        #     # root.title(f'Метод Монте-Карло. t={t}, step={step}')
+        #
+        #     CO=checkers2(X=X, Y=Y,board=board,visibable=False)
+        #     FetaCO.append(CO)
 
-        if step%1000==0:
-            # time.sleep(1)
-            # root.title(f'Метод Монте-Карло. t={t}, step={step}')
 
-            CO=checkers2(root, canvas, st, X, Y,board=board,visibable=False)
-            FetaCO.append(CO)
-            # print(time.time()-tt1)
-        # if i%100==0:
-        #     canvas.create_text(250, 20, fill="black", font="Times 30 italic bold",
-        #                        text=f"t={t}, step={i}")
-        #     save_as_png(canvas=canvas, fileName=f'out/{i}')
-
-    #Формирование файла демонстрационой анимации
-    # images[0].save('out/KMK_Kurkina.gif',
-    #                save_all=True,
-    #                append_images=images[1:],
-    #                duration=1000,
-    #                loop=0)
-
-    root.mainloop()
 
 if __name__ == '__main__':
     main()

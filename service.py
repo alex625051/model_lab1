@@ -197,3 +197,34 @@ def checkers3(root, canvas, st, X, Y,board=False):
             canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
     print(CO/all)
     root.update()
+
+
+def checkers4(root=False, canvas=False, st=False, X=False, Y=False,board=False,visibable=False):
+    all=X*Y
+    fetaD=0
+    minor=st*0.95
+    if visibable:
+        canvas.delete("all")
+        build_board(canvas, st, X,Y)
+    # I - красные, H - синие, D - черные, F - зеленые
+
+    # mprint(board)
+    outline = '#000'
+
+    for i in range(Y):
+        for j in range(X):
+            value = board[i][j]
+
+            if value=="H":color='blue'
+            elif value=="D":
+                color='black';fetaD=fetaD+1
+            elif value=="F":color='green'
+            elif value=="I":color='red'
+
+            if visibable:
+                x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
+                canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
+    if visibable:
+        print(fetaD/all)
+        root.update()
+    return fetaD/all
