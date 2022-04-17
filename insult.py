@@ -18,26 +18,28 @@ import os.path
 continued=False
 showVisualDelay=1;
 unlimetedSteps=True;
+unlimetedLimits=False;
+startIcellsFromCenter=True;
 continuedVer='1.5'
 # Вводные данные
 nol0=decimal.Decimal('0')
-X = 5;
-Y = 5;
+X = 10;
+Y = 10;
 T = 300;
-N_I=X*Y*0.0
-N_D=X*Y*0.0
+N_I=X*Y*0.3
+N_D=X*Y*0.000
 N_F=X*Y*0.0
-k1=decimal.Decimal('0.05')/90; # H->I
-k1minus=decimal.Decimal('0.05')/90; # I->H
-k2=decimal.Decimal('1')/360; # I->D
+k1=decimal.Decimal('0')/90; # H->I
+k1minus=decimal.Decimal('0')/90; # I->H
+k2=decimal.Decimal('0')/360; # I->D
 k4=decimal.Decimal('0.0') # I->F
 k4minus=decimal.Decimal('0.0') # F->I
 k5=decimal.Decimal('0.0') # F->H
 k7=decimal.Decimal('0.3')/90; # IH->HH
 k8=decimal.Decimal('0.4')/90; # HI->II
-k9=decimal.Decimal('0.0') # HD->ID
-k10=decimal.Decimal('0.0') # ID->DD
-k11=decimal.Decimal('0.0') # II->DI
+k9=decimal.Decimal('0.4')/360 # HD->ID
+k10=decimal.Decimal('0.2')/360 # ID->DD
+k11=decimal.Decimal('0.2')/360 # II->DI
 
 R = nol0; # глобальная переменная с R
 FetaD_array=[]
@@ -52,13 +54,29 @@ def start_status():
     I=0
     D=0
     F=0
+    if startIcellsFromCenter:
+        xCenter = round(X / 2)
+        yCenter = round(Y / 2)
+        radius=math.ceil(math.sqrt(N_I/math.pi))
+        pointsInRadius =list()
+        for x in range(0, X):
+            for y in range(0, Y):
+                if math.sqrt((x - xCenter) ** 2 + (y - yCenter) ** 2) < radius:
+                    pointsInRadius.append({"x": x, "y": y})
     while I < N_I:
-        x = random.randint(0, X - 1)
-        y = random.randint(0, Y - 1)
+        if startIcellsFromCenter:
+            if not len(pointsInRadius):
+                break
+            onePoint=pointsInRadius.pop()
+            x=onePoint['x'];y=onePoint['y'];
+        else:
+            x = random.randint(0, X - 1)
+            y = random.randint(0, Y - 1)
         if board[y][x] == "H":
             I = I + 1
             board[y][x] = "I"
     while (D < N_D) and ((I+D)<X*Y):
+
         x = random.randint(0, X - 1)
         y = random.randint(0, Y - 1)
         if board[y][x] == "H":
@@ -72,67 +90,114 @@ def start_status():
             board[y][x] = "F"
 
     return board
+def get_event_2x2_limits(x, y, dx, dy): # граничные условия
+    x2 = x + dx
+    y2 = y + dy
+    if unlimetedLimits:
+        # Бесконечная решетка
+        if x2 == X:
+            x2 = 0;
+        elif y2 == Y:
+            y2 = 0;
+        return x, y, dx, dy, x2, y2
+    else:
+        # Граничные условия с "H"
+        if x2 == X:
+            x2 = False;
+        elif y2 == Y:
+            y2 = False;
+        return x, y, dx, dy, x2, y2
+
+
 
 def get_event_2x2(x, y, dx, dy, board):  # Исследование 1 варианта развития событий при 2 узлах в 2 стороны
     # new_board = mcopy(board)
     ret = {'speed': nol0}
-    x2 = x + dx
-    y2 = y + dy
-    if x2 == X:
-        x2 = 0;
-    elif y2 == Y:
-        y2 = 0;
+    x, y, dx, dy, x2, y2 = get_event_2x2_limits(x, y, dx, dy)
     ret['y'] = y;
     ret['x'] = x;
-    ret['y2'] = y2;
-    ret['x2'] = x2;
+    if y2 and x2:
+        secondCell= board[y2][x2]
+        ret['y2'] = y2;
+        ret['x2'] = x2;
+    else:
+        secondCell="H"
 
 
     if board[y][x] == 'I':
-        if board[y2][x2] == 'I':
+        if secondCell == 'I':
             ret['speed'] = k11  #
             ret['yx'] = "D"  #
-            ret['y2x2'] = "I"  #
+            if y2 and x2:
+                ret['y2x2'] = "I"  #
             return [ret]
     return []
+
+def get_event_2x4_limits(x, y, dx, dy):
+    x2 = x + dx
+    y2 = y + dy
+    if unlimetedLimits:
+        if x2 == X:
+            x2 = 0;
+        elif y2 == Y:
+            y2 = 0;
+        elif x2 < 0:
+            x2 = X - 1;
+        elif y2 < 0:
+            y2 = Y - 1;
+        return x, y, dx, dy, x2, y2
+    else:
+        if x2 == X:
+            x2 = False;
+        elif y2 == Y:
+            y2 = False;
+        elif x2 < 0:
+            x2 = False;
+        elif y2 < 0:
+            y2 = False;
+        return x, y, dx, dy, x2, y2
 
 
 def get_event_2x4(x,y,dx,dy,board): # Исследование 1 варианта развития событий при 2 узлах на 4 стороны
     # new_board=mcopy(board)
     ret={'speed':nol0}
-    x2=x+dx
-    y2=y+dy
-    if x2==X:x2=0;
-    elif y2==Y:y2=0;
-    elif x2<0:x2=X-1;
-    elif y2<0:y2=Y-1;
+    x, y, dx, dy, x2, y2 = get_event_2x4_limits(x, y, dx, dy)
     ret['y'] = y;
     ret['x'] = x;
-    ret['y2'] = y2;
-    ret['x2'] = x2;
+    if y2 and x2:
+        secondCell = board[y2][x2]
+        ret['y2'] = y2;
+        ret['x2'] = x2;
+    else:
+        secondCell = "H"
+
 
     if board[y][x] == 'H':
-        if board[y2][x2] == 'I':
+        if secondCell == 'I':
             ret['speed'] = k8  #
             ret['yx'] = "I"  #
-            ret['y2x2'] = "I"  #
+            if y2 and x2:
+                ret['y2x2'] = "I"  #
             return [ret]
-        if board[y2][x2] == 'D':
+        if secondCell == 'D':
             ret['speed'] = k9  #
             ret['yx'] = "I"  #
-            ret['y2x2'] = "D"  #
+            if y2 and x2:
+                ret['y2x2'] = "D"  #
             return [ret]
 
     if board[y][x] == 'I':
-        if board[y2][x2] == 'H':
+        if secondCell == 'H':
             ret['speed'] = k7  #
             ret['yx'] = "H"  #
-            ret['y2x2'] = "H"  #
+            if y2 and x2:
+                ret['y2x2'] = "H"  #
             return [ret]
-        if board[y2][x2] == 'D':
+        if secondCell == 'D':
             ret['speed'] = k10  #
             ret['yx'] = "D"  #
-            ret['y2x2'] = "D"  #
+            if y2 and x2:
+                ret['y2x2'] = "D"  #
             return [ret]
     return []
 
