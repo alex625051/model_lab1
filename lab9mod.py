@@ -3,7 +3,8 @@ import time
 import random
 from service import *
 import math
-import ghostscript
+# import ghostscript
+saveMult=False;
 
 # Вводные данные
 X = 20;
@@ -130,7 +131,8 @@ def main():
 
     #отрисовка частиц в начальном состоянии и сохранение кадра визуализации
     checkers(root, canvas, st, X, Y,board=board)
-    save_as_png(canvas=canvas, fileName=f'out/00')
+    if saveMult:
+        save_as_png (canvas=canvas, fileName=f'out/00')
 
     for i in mrange(1,T): # Проходим Т шагов, отображаем каждый 10, создаем анимацию Гиф
         board, t = move_cell(X=X, Y=Y,board=board, t=t)
@@ -140,16 +142,18 @@ def main():
         root.title(f'Метод Монте-Карло. t={t}, step={i}')
         checkers(root, canvas, st, X, Y,board=board)
         if i%100==0:
-            canvas.create_text(250, 20, fill="black", font="Times 30 italic bold",
-                               text=f"t={t}, step={i}")
-            save_as_png(canvas=canvas, fileName=f'out/{i}')
+            if saveMult:
+                canvas.create_text(250, 20, fill="black", font="Times 30 italic bold",
+                                   text=f"t={t}, step={i}")
+                save_as_png(canvas=canvas, fileName=f'out/{i}')
 
     #Формирование файла демонстрационой анимации
-    images[0].save('out/monte_Carlo1.gif',
-                   save_all=True,
-                   append_images=images[1:],
-                   duration=1000,
-                   loop=0)
+    if saveMult:
+        images[0].save('out/monte_Carlo1.gif',
+                       save_all=True,
+                       append_images=images[1:],
+                       duration=1000,
+                       loop=0)
 
     root.mainloop()
 

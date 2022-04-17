@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import decimal
 from service import *
 
-continuedVer='1.5-green'
+continuedVer='1.5-green_footer'
 
 def show_from_CO_line():
     dF=pd.read_csv(f'out/FetaCO_{continuedVer}.csv')# ,nrows=100 )
