@@ -202,6 +202,9 @@ def checkers3(root, canvas, st, X, Y,board=False):
 def checkers4(root=False, canvas=False, st=False, X=False, Y=False,board=False,visibable=False):
     all=X*Y
     fetaD=0
+    fetaI=0
+    fetaH=0
+    fetaF=0
     minor=st*0.95
     if visibable:
         canvas.delete("all")
@@ -215,16 +218,17 @@ def checkers4(root=False, canvas=False, st=False, X=False, Y=False,board=False,v
         for j in range(X):
             value = board[i][j]
 
-            if value=="H":color='blue'
+            if value=="H":color='blue';fetaH=fetaH+1
             elif value=="D":
                 color='black';fetaD=fetaD+1
-            elif value=="F":color='green'
-            elif value=="I":color='red'
+            elif value=="F":color='green';fetaF=fetaF+1
+            elif value=="I":color='red';fetaI=fetaI+1
 
             if visibable:
                 x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
                 canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
     if visibable:
-        print(fetaD/all)
+        print(f'H+I: {(fetaD + fetaI) / all}')
         root.update()
-    return fetaD/all
+    fetas={"fetaH":fetaH/all,"fetaI":fetaI/all,"fetaD":fetaD/all,"fetaF":fetaF/all}
+    return fetas
