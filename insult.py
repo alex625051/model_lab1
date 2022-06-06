@@ -251,16 +251,25 @@ def get_r_event(R):
 
 # Вычисление R с ускорением
 def get_r_event2(R):
-    Ep_minus1 = nol0
     E = decimal.Decimal(str(numpy.random.uniform()))
     ER = E * R
-    for key in speeds_dict:
-        if speeds_dict[key]['R_'] == 0: continue
-        position_events = speeds_dict[key]['events_']
-        for ev in position_events:
-            if (ER > Ep_minus1) and (ER <= (Ep_minus1 + ev['speed'])):
-                return ev
-            Ep_minus1 = Ep_minus1 + ev['speed']
+    def get_r_event_from_speeds_dict_R():
+        Ep_minus1 = nol0
+        for key in speeds_dict:
+            R_= speeds_dict[key]['R_']
+            if R_ == 0: continue
+            if (ER > Ep_minus1) and (ER <= (Ep_minus1 + R_)):
+                return Ep_minus1, key
+            Ep_minus1 = Ep_minus1 + R_
+        return False,False
+
+    Ep_minus1, speeds_dict_key=get_r_event_from_speeds_dict_R()
+    if not speeds_dict_key: return False
+    position_events = speeds_dict[speeds_dict_key]['events_']
+    for ev in position_events:
+        if (ER > Ep_minus1) and (ER <= (Ep_minus1 + ev['speed'])):
+            return ev
+        Ep_minus1 = Ep_minus1 + ev['speed']
     return False
 
 # получить все возможные события для одного узла решетки
@@ -322,7 +331,6 @@ def change_board(board, t, changed_points):
     global R
     # шаг 2
     # Вычисление скоростей элементарных событий. На текущий момент времени t1 и вычисление суммарной скорости R
-    events = []
 
     # Ускорение алгоритма - работа только с измененными ячейками решетки и их окружением
     if changed_points:
@@ -330,7 +338,6 @@ def change_board(board, t, changed_points):
             i = point['y']
             j = point['x']
             events_, R_ = inv_1_point(i, j, board)
-            events = events + events_
             R = R - speeds_dict[f'{i}_{j}']['R_']
             speeds_dict[f'{i}_{j}']['R_'] = R_;
             speeds_dict[f'{i}_{j}']['events_'] = events_;
@@ -341,14 +348,13 @@ def change_board(board, t, changed_points):
         for i in prange(Y):
             for j in prange(X):
                 events_, R_ = inv_1_point(i, j, board)
-                events = events + events_
                 R = R + R_
                 speeds_dict[f'{i}_{j}']['R_'] = R_;
                 speeds_dict[f'{i}_{j}']['events_'] = events_;
 
     # шаг 3 Случайно выбирается одно из возможных элементарных событий с вероятностью, пропорциональной его скорости.
     # Изменяется состояние решётки в соответствии с выбранным событием
-    ev = get_r_event(R=R)
+    ev = get_r_event2(R=R)
     # шаг 4 Вычисление шага по времени. Вычисляется момент времени t2 выхода системы
     # из текущего состояния: t2=t1-ln(E)/R, где E - случайная величина, равномерно распределённая на интервале (0,1).
     E = decimal.Decimal(str(random.random()))
