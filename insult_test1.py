@@ -18,13 +18,13 @@ import moviepy.editor as mp
 
 
 
-continuedVer = '2.01_01'  # Номер набора начальных условий и настроек
+continuedVer = '1.18_3'  # Номер набора начальных условий и настроек
 
 # Техические вводные данные модели
 nol0 = decimal.Decimal('0')  # Ноль типа Decimal
 continued = False  # Возобновляемый режим для распределенных вычислений
 saveGif=True;
-showVisualDelay = 1000;  # Пропуск шагов для следующего этапа визуализации
+showVisualDelay = 100;  # Пропуск шагов для следующего этапа визуализации
 unlimetedSteps = True;  # Вычислять до полного перебора всех доступных вероятностей перехода состояния модели
 unlimetedLimits = False;  # Бесконечная решетка разрешена
 averBoardHLimit = True;  # окружаем рабочую область граничными ячейками с "H"
@@ -32,25 +32,24 @@ startIcellsFromCenter = True;  # Заполняем начальное сост�
 t0 = decimal.Decimal('5')  # Начальное время
 xlimits = [0, 60 * 24 * 3]  # Лимиты оси X визуализации
 T = 300;  # Предельное количество шагов (при unlimetedSteps = False)
-visibable=False;
 
 # Вводные данные
-X = 300;
-Y = 300;
+X = 30;
+Y = 30;
 N_I = X * Y * 0.10  # Начальное количество I-ячеек для заполнения (общее количество ячеек умноженное на долю I)
 N_D = X * Y * 0.000
 N_F = X * Y * 0.0
 k1 = decimal.Decimal('0') / 90;  # H->I
 k1minus = decimal.Decimal('0') / 90;  # I->H
-k2 = decimal.Decimal('1.2') / 360;  # I->D
+k2 = decimal.Decimal('0.0033333333333333335') ;  # I->D
 k4 = decimal.Decimal('0.0')  # I->F
 k4minus = decimal.Decimal('0.0')  # F->I
 k5 = decimal.Decimal('0.0')  # F->H
-k7 = decimal.Decimal('8') / 90;  # IH->HH
-k8 = decimal.Decimal('4') / 90;  # HI->II
-k9 = decimal.Decimal('8') / 90  # HD->ID
-k10 = decimal.Decimal('1.2') / 360  # ID->DD
-k11 = decimal.Decimal('1.2') / 360  # II->DI
+k7 = decimal.Decimal('0.08888888888888889') ;  # IH->HH
+k8 = decimal.Decimal('0.044444444444444446');  # HI->II
+k9 = decimal.Decimal('0.08888888888888889')  # HD->ID
+k10 = decimal.Decimal('0.0033333333333333335')  # ID->DD
+k11 = decimal.Decimal('0.0033333333333333335')  # II->DI
 
 # Глобальные переменные реализации модели
 R = nol0;  # глобальная переменная с R
@@ -249,19 +248,6 @@ def get_r_event(R):
             Ep_minus1 = Ep_minus1 + ev['speed']
     return False
 
-# Вычисление R с ускорением
-def get_r_event2(R):
-    Ep_minus1 = nol0
-    E = decimal.Decimal(str(numpy.random.uniform()))
-    ER = E * R
-    for key in speeds_dict:
-        if speeds_dict[key]['R_'] == 0: continue
-        position_events = speeds_dict[key]['events_']
-        for ev in position_events:
-            if (ER > Ep_minus1) and (ER <= (Ep_minus1 + ev['speed'])):
-                return ev
-            Ep_minus1 = Ep_minus1 + ev['speed']
-    return False
 
 # получить все возможные события для одного узла решетки
 def get_event_1(x, y, board):
@@ -487,11 +473,13 @@ def main():
     board = start_status()
 
     # отрисовка частиц в начальном состоянии и сохранение кадра визуализации
-    fetas = checkers4(root, canvas, st, X, Y, board=board, visibable=visibable)
+    fetas = checkers4(root, canvas, st, X, Y, board=board, visibable=True)
     fetas['t'] = t
     FetaD_array.append(fetas)
     root.title(f'Метод Монте-Карло. t={tToint(t)}, step={step}')
     root.bind('<Button-1>', lambda e: pauseUI(root))
+    if saveGif:
+        save_as_png(canvas=canvas)
 
     while unlimetedSteps or t <= 300:  # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
         # tt1=time.time()
@@ -521,7 +509,7 @@ def main():
         # Прорисовка визуализации
         if step % showVisualDelay == 0:
             root.title(f'Метод Монте-Карло. t={tToint(t)} мин, step={step}')
-            fetas = checkers4(root, canvas, st, X, Y, board=board, visibable=visibable)
+            fetas = checkers4(root, canvas, st, X, Y, board=board, visibable=True)
             fetas['t'] = t
             FetaD_array.append(fetas)
 

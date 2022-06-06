@@ -228,7 +228,7 @@ def checkers4(root=False, canvas=False, st=False, X=False, Y=False,board=False,v
                 x1, y1, x2, y2 = j * st+minor, i * st+minor, j * st + st-minor, i * st + st-minor
                 canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
     if visibable:
-        print(f'H+I: {(fetaD + fetaI) / all}')
         root.update()
     fetas={"fetaH":fetaH/all,"fetaI":fetaI/all,"fetaD":fetaD/all,"fetaF":fetaF/all}
+    print(f'H+I: {(fetaD + fetaI) / all}')
     return fetas

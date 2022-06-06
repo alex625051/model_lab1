@@ -7,10 +7,9 @@ from matplotlib.ticker import FuncFormatter
 
 from service import *
 import datetime
-continuedVer='1.6'
 letConfigFromFile=True;
 nrows = None;
-continuedVer = '1.15'
+continuedVer = '1.18_GBO_x2'
 # Вводные данные
 
 
@@ -23,7 +22,7 @@ def showGraph(FetaD_array, configs=False):
         Y = configs['Y']
         N_I = configs['N_I']
         xlimits = configs['xlimits']
-        xlimits = [0, 60*10]
+        xlimits = [0, 60*25]
 
     def formatOx(x, pos):
         delta = datetime.timedelta(minutes=float(x))

@@ -1,11 +1,11 @@
 import io
+import os
 from tkinter import *
 import datetime
 import random
 from matplotlib.ticker import FuncFormatter
-from service import *
 import math
-from numba import njit, prange
+from numba import prange
 import decimal
 import numpy
 import pandas as pd
@@ -15,16 +15,13 @@ from PIL import Image
 import ghostscript
 import moviepy.editor as mp
 
-
-
-
-continuedVer = '2.01_01'  # Номер набора начальных условий и настроек
+continuedVer = '1.18_3'  # Номер набора начальных условий и настроек
 
 # Техические вводные данные модели
 nol0 = decimal.Decimal('0')  # Ноль типа Decimal
 continued = False  # Возобновляемый режим для распределенных вычислений
-saveGif=True;
-showVisualDelay = 1000;  # Пропуск шагов для следующего этапа визуализации
+saveGif = True;
+showVisualDelay = 100;  # Пропуск шагов для следующего этапа визуализации
 unlimetedSteps = True;  # Вычислять до полного перебора всех доступных вероятностей перехода состояния модели
 unlimetedLimits = False;  # Бесконечная решетка разрешена
 averBoardHLimit = True;  # окружаем рабочую область граничными ячейками с "H"
@@ -32,47 +29,102 @@ startIcellsFromCenter = True;  # Заполняем начальное сост�
 t0 = decimal.Decimal('5')  # Начальное время
 xlimits = [0, 60 * 24 * 3]  # Лимиты оси X визуализации
 T = 300;  # Предельное количество шагов (при unlimetedSteps = False)
-visibable=False;
 
-# Вводные данные
+# Входные данные
 X = 300;
 Y = 300;
 N_I = X * Y * 0.10  # Начальное количество I-ячеек для заполнения (общее количество ячеек умноженное на долю I)
 N_D = X * Y * 0.000
 N_F = X * Y * 0.0
-k1 = decimal.Decimal('0') / 90;  # H->I
-k1minus = decimal.Decimal('0') / 90;  # I->H
-k2 = decimal.Decimal('1.2') / 360;  # I->D
+k1 = decimal.Decimal('0') / 90  # H->I
+k1minus = decimal.Decimal('0') / 90  # I->H
+k2 = decimal.Decimal('0.0033333333333333335')  # I->D
 k4 = decimal.Decimal('0.0')  # I->F
 k4minus = decimal.Decimal('0.0')  # F->I
 k5 = decimal.Decimal('0.0')  # F->H
-k7 = decimal.Decimal('8') / 90;  # IH->HH
-k8 = decimal.Decimal('4') / 90;  # HI->II
-k9 = decimal.Decimal('8') / 90  # HD->ID
-k10 = decimal.Decimal('1.2') / 360  # ID->DD
-k11 = decimal.Decimal('1.2') / 360  # II->DI
+k7 = decimal.Decimal('0.08888888888888889')  # IH->HH
+k8 = decimal.Decimal('0.044444444444444446')  # HI->II
+k9 = decimal.Decimal('0.08888888888888889')  # HD->ID
+k10 = decimal.Decimal('0.0033333333333333335')  # ID->DD
+k11 = decimal.Decimal('0.0033333333333333335')  # II->DI
 
 # Глобальные переменные реализации модели
-R = nol0;  # глобальная переменная с R
-FetaD_array = []
-speeds_dict = {}
-images=[]
+R = nol0  # глобальная переменная с R
+out_data_array = []  # глобальная переменная с выходными данными
+speeds_dict = {}  # глобальная переменная со скоростями процессов
+images = []  # глобальная переменная - список кадров для записи визуализации
 for i in prange(Y):
     for j in prange(X):
         speeds_dict[f'{i}_{j}'] = {'i': i, 'j': j}
 
 
-# сохранения кадра визуализации
-def save_as_png(canvas):
+# сохранение кадра визуализации
+def addCanvasToArr(canvas):
     global images
 
-    # save postscript image
-    canvasImage=canvas.postscript(colormode='color')
+    # producing postscript image
+    canvasImage = canvas.postscript(colormode='color')
 
-    # use PIL to convert to PNG
+    # use PIL to convert to image
     img = Image.open(io.BytesIO(canvasImage.encode('utf-8')))
     images.append(img)
-    # img.save(fileName + '.png', 'png')
+
+
+# Инициализация canvas
+def create_TK(width, height):
+    root = Tk()
+    canvas = Canvas(root, width=width, height=height)
+    canvas.pack()
+    return root, canvas
+
+
+# Построение решетки визуализации
+def build_board(canvas, st, X, Y, x=False, y=False):
+    fill = '#FECD72'
+    outline = '#825100'
+    if x and y:
+        canvas.create_rectangle(x * st, y * st, x * st + st, y * st + st, fill=fill, outline=outline)
+
+    for i in range(0, X):
+        for j in range(0, Y):
+            canvas.create_rectangle(i * st, j * st, i * st + st, j * st + st, fill=fill, outline=outline)
+
+
+# Формирование словаря с выходными данными. Визуализация на решетке
+def prepareOutData_1step(root=False, canvas=False, st=False, X=False, Y=False, board=False, visibable=False):
+    all = X * Y
+    fetaD = 0
+    fetaI = 0
+    fetaH = 0
+    fetaF = 0
+    minor = st * 0.95
+    if visibable:
+        canvas.delete("all")
+        build_board(canvas, st, X, Y)
+    # I - красные, H - синие, D - черные, F - зеленые
+
+    outline = '#000'
+    for i in range(Y):
+        for j in range(X):
+            value = board[i][j]
+            if value == "H":
+                color = 'blue';fetaH = fetaH + 1
+            elif value == "D":
+                color = 'black';
+                fetaD = fetaD + 1
+            elif value == "F":
+                color = 'green';fetaF = fetaF + 1
+            elif value == "I":
+                color = 'red';fetaI = fetaI + 1
+
+            if visibable:
+                x1, y1, x2, y2 = j * st + minor, i * st + minor, j * st + st - minor, i * st + st - minor
+                canvas.create_oval(x1, y1, x2, y2, fill=color, outline=outline)
+    if visibable:
+        print(f'H+I: {(fetaD + fetaI) / all}')
+        root.update()
+    fetas = {"fetaH": fetaH / all, "fetaI": fetaI / all, "fetaD": fetaD / all, "fetaF": fetaF / all}
+    return fetas
 
 
 # Заполнение ячеек для начального состояния решетки модели
@@ -249,19 +301,6 @@ def get_r_event(R):
             Ep_minus1 = Ep_minus1 + ev['speed']
     return False
 
-# Вычисление R с ускорением
-def get_r_event2(R):
-    Ep_minus1 = nol0
-    E = decimal.Decimal(str(numpy.random.uniform()))
-    ER = E * R
-    for key in speeds_dict:
-        if speeds_dict[key]['R_'] == 0: continue
-        position_events = speeds_dict[key]['events_']
-        for ev in position_events:
-            if (ER > Ep_minus1) and (ER <= (Ep_minus1 + ev['speed'])):
-                return ev
-            Ep_minus1 = Ep_minus1 + ev['speed']
-    return False
 
 # получить все возможные события для одного узла решетки
 def get_event_1(x, y, board):
@@ -280,6 +319,7 @@ def get_event_1(x, y, board):
     return ret
 
 
+# Вычисления элементарных процессов и взаимодействий для 1 ячейки решетки
 def inv_1_point(i, j, board):
     R_ = nol0;
     events = []
@@ -334,7 +374,6 @@ def change_board(board, t, changed_points):
             R = R - speeds_dict[f'{i}_{j}']['R_']
             speeds_dict[f'{i}_{j}']['R_'] = R_;
             speeds_dict[f'{i}_{j}']['events_'] = events_;
-
             R = R + speeds_dict[f'{i}_{j}']['R_']
 
     if not changed_points:
@@ -363,6 +402,7 @@ def change_board(board, t, changed_points):
     except:
         return False
 
+    # Получение ближайшего окружения ячейки
     def get_near_points(x, y):
         x1 = x + 1
         y1 = y + 0
@@ -378,6 +418,8 @@ def change_board(board, t, changed_points):
         if y4 < 0: y4 = Y - 1
         return [{'x': x1, 'y': y1}, {'x': x2, 'y': y2}, {'x': x3, 'y': y3}, {'x': x4, 'y': y4}]
 
+
+    # Получить только измененные точки
     def get_changed_points(ev):
         points = []
         points = points + get_near_points(x=ev['x'], y=ev['y'])
@@ -391,14 +433,14 @@ def change_board(board, t, changed_points):
         board[ev['y2']][ev['x2']] = ev['y2x2']
 
     changed_points = get_changed_points(ev)
-
     return board, t, changed_points
 
 
 # Визуализация на графике по окончании рабготы программы и запись на хранилище данных
-def showGraph(FetaD_array,filename_suffix=""):
+def showGraph(FetaD_array, filename_suffix=""):
     def prepareConfigsToSave():
-        configs = {"saveGif":saveGif,"continued": continued, "showVisualDelay": showVisualDelay, "unlimetedSteps": unlimetedSteps,
+        configs = {"saveGif": saveGif, "continued": continued, "showVisualDelay": showVisualDelay,
+                   "unlimetedSteps": unlimetedSteps,
                    "unlimetedLimits": unlimetedLimits, "averBoardHLimit": averBoardHLimit,
                    "startIcellsFromCenter": startIcellsFromCenter, "t0": t0, "continuedVer": continuedVer,
                    "xlimits": xlimits, "X": X, "Y": Y, "T": T, "N_I": N_I, "N_D": N_D, "N_F": N_F, "k1": k1,
@@ -416,9 +458,11 @@ def showGraph(FetaD_array,filename_suffix=""):
         return deltaStr
 
     dF = pd.DataFrame(FetaD_array)
-    with open(f'out/FetaD_array_{continuedVer}{filename_suffix}.csv', 'w') as ff:
+    if not os.path.isdir('out'):
+        os.mkdir("out")
+    with open(f'out/outData_{continuedVer}{filename_suffix}.csv', 'w') as ff:
         ff.write(prepareConfigsToSave() + '\n')
-    dF.to_csv(f'out/FetaD_array_{continuedVer}{filename_suffix}.csv', index=False, mode='a')
+    dF.to_csv(f'out/outData_{continuedVer}{filename_suffix}.csv', index=False, mode='a')
     fig = plt.figure(figsize=(18, 6), dpi=200)
     yD = dF['fetaD'].tolist()
     yF = dF['fetaF'].tolist()
@@ -443,16 +487,18 @@ def showGraph(FetaD_array,filename_suffix=""):
     ax.xaxis.set_major_formatter(FuncFormatter(formatOx))
 
     fig.show()
-    fig.savefig(f'out/fetas_array_{continuedVer}{filename_suffix}.png')
+    fig.savefig(f'out/outDataGraph_{continuedVer}{filename_suffix}.png')
     print(dF)
 
 
+# Изменение формата t для визуализации
 def tToint(t):
     delta = datetime.timedelta(minutes=float(t))
     ret = f"t={int(t)}min ({delta})"
     return ret
 
 
+# Обработка событий TK для приостановки алгоритма
 def pauseUI(root):
     pause_var2 = StringVar()
     root.bind('<Button-1>', lambda e: pause_var2.set(1))
@@ -461,6 +507,7 @@ def pauseUI(root):
     root.bind('<Button-1>', lambda e: pauseUI(root))
 
 
+# Функция main()
 def main():
     global speeds_dict
     t = t0
@@ -468,51 +515,54 @@ def main():
     changed_points = []
     # Начальная прорисовка объектов визуализации
     st = (700 * 2) / (X + Y)
-
     root, canvas = create_TK(width=st * X, height=st * Y)
 
+    # Обработка события - закрытие окна визуализации
     def on_closing():
         root.event_generate("<Key>")
-        showGraph(FetaD_array, filename_suffix="_interact")
+        showGraph(out_data_array, filename_suffix="_interact")
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.title('Метод Монте-Карло. t=0')
 
     # отрисовка решетки
-    build_square(canvas, st, X, Y)
     build_board(canvas, st, X, Y)
 
     # step 1 Заполняем начальное состояние решетки
     board = start_status()
 
     # отрисовка частиц в начальном состоянии и сохранение кадра визуализации
-    fetas = checkers4(root, canvas, st, X, Y, board=board, visibable=visibable)
-    fetas['t'] = t
-    FetaD_array.append(fetas)
+    out_data_1step = prepareOutData_1step(root, canvas, st, X, Y, board=board, visibable=True)
+    out_data_1step['t'] = t
+    out_data_array.append(out_data_1step)
     root.title(f'Метод Монте-Карло. t={tToint(t)}, step={step}')
     root.bind('<Button-1>', lambda e: pauseUI(root))
+    if saveGif:
+        addCanvasToArr(canvas=canvas)
 
     while unlimetedSteps or t <= 300:  # Алгоритм работает до времени T, отображаем каждый 10, создаем анимацию Гиф
-        # tt1=time.time()
         step = step + 1
         try:
             board, t, changed_points = change_board(board=board, t=t, changed_points=changed_points)
         except:
             if saveGif:
+                if not os.path.isdir('out2'):
+                    os.mkdir("out2")
                 print('saving gif')
-                images[0].save(f'out2/{continuedVer}_board.gif',
+                images[0].save(f'out2/evolution_{continuedVer}_board.gif',
                                save_all=True,
                                append_images=images[1:],
                                duration=1000,
                                loop=0)
-                clip = mp.VideoFileClip(filename=f'out2/{continuedVer}_board.gif',audio=False, target_resolution=(1000,1000) )
+                clip = mp.VideoFileClip(filename=f'out2/evolution_{continuedVer}_board.gif', audio=False,
+                                        target_resolution=(1000, 1000))
                 print('saving mp4')
-                clip.write_videofile(f'out2/{continuedVer}_board.mp4')
+                clip.write_videofile(f'out2/evolution_{continuedVer}_board.mp4')
             print("Нет возможных событий для текущего состояния системы.\n Нажмите любую клавишу")
             pause_var = StringVar()
             root.bind('<Key>', lambda e: pause_var.set(1))
-            showGraph(FetaD_array)
+            showGraph(out_data_array)
             root.wait_variable(pause_var)
             exit()
 
@@ -521,12 +571,12 @@ def main():
         # Прорисовка визуализации
         if step % showVisualDelay == 0:
             root.title(f'Метод Монте-Карло. t={tToint(t)} мин, step={step}')
-            fetas = checkers4(root, canvas, st, X, Y, board=board, visibable=visibable)
-            fetas['t'] = t
-            FetaD_array.append(fetas)
+            out_data_1step = prepareOutData_1step(root, canvas, st, X, Y, board=board, visibable=True)
+            out_data_1step['t'] = t
+            out_data_array.append(out_data_1step)
 
             if saveGif:
-                save_as_png(canvas=canvas)
+                addCanvasToArr(canvas=canvas)
 
     root.mainloop()
 
