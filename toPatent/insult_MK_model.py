@@ -286,7 +286,7 @@ def get_event_2x4(x, y, dx, dy, board):
     return []
 
 
-# Вычисление R
+# Вычисление R и получение следующего события
 def get_r_event(R):
     Ep_minus1 = nol0
     E = decimal.Decimal(str(numpy.random.uniform()))
@@ -436,7 +436,7 @@ def change_board(board, t, changed_points):
     return board, t, changed_points
 
 
-# Визуализация на графике по окончании рабготы программы и запись на хранилище данных
+# Визуализация на графике по окончании работы программы и запись на хранилище данных
 def showGraph(FetaD_array, filename_suffix=""):
     def prepareConfigsToSave():
         configs = {"saveGif": saveGif, "continued": continued, "showVisualDelay": showVisualDelay,

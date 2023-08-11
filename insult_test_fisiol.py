@@ -19,21 +19,21 @@ import moviepy.editor as mp
 
 
 
-continuedVer = '2.01_03'  # Номер набора начальных условий и настроек
+continuedVer = '3_fisiol'  # Номер набора начальных условий и настроек
 
 # Техические вводные данные модели
 nol0 = decimal.Decimal('0')  # Ноль типа Decimal
 continued = False  # Возобновляемый режим для распределенных вычислений
-saveGif=True;
-showVisualDelay = 1000;  # Пропуск шагов для следующего этапа визуализации
+saveGif=False;
+showVisualDelay = 100;  # Пропуск шагов для следующего этапа визуализации
 unlimetedSteps = True;  # Вычислять до полного перебора всех доступных вероятностей перехода состояния модели
 unlimetedLimits = False;  # Бесконечная решетка разрешена
 averBoardHLimit = True;  # окружаем рабочую область граничными ячейками с "H"
 startIcellsFromCenter = True;  # Заполняем начальное состояние решетки вокруг с геометрическогоцентра
 t0 = decimal.Decimal('5')  # Начальное время
-xlimits = [0, 60 * 24 * 3]  # Лимиты оси X визуализации
+xlimits = [0, 60 * 24 * 1]  # Лимиты оси X визуализации
 T = 300;  # Предельное количество шагов (при unlimetedSteps = False)
-visibable=False;
+visibable=True;
 
 # Вводные данные
 X = 30;
@@ -41,17 +41,17 @@ Y = 30;
 N_I = X * Y * 0.10  # Начальное количество I-ячеек для заполнения (общее количество ячеек умноженное на долю I)
 N_D = X * Y * 0.000
 N_F = X * Y * 0.0
-k1 = decimal.Decimal('0') / 90;  # H->I
-k1minus = decimal.Decimal('0') / 90;  # I->H
-k2 = decimal.Decimal('1.2') / 360;  # I->D
-k4 = decimal.Decimal('0.0')  # I->F
-k4minus = decimal.Decimal('0.0')  # F->I
-k5 = decimal.Decimal('0.0')  # F->H
-k7 = decimal.Decimal('8') / 90;  # IH->HH
-k8 = decimal.Decimal('4') / 90;  # HI->II
-k9 = decimal.Decimal('8') / 90  # HD->ID
-k10 = decimal.Decimal('1.2') / 360  # ID->DD
-k11 = decimal.Decimal('1.2') / 360  # II->DI
+k1 = decimal.Decimal('0.01') / 90;  # H->I
+k1minus = decimal.Decimal('0.01') / 90;  # I->H
+k2 = decimal.Decimal('0.001') / 360;  # I->D
+k4 = decimal.Decimal('0')/90  # I->F
+k4minus = decimal.Decimal('0')/90  # F->I
+k5 = decimal.Decimal('0')/90  # F->H
+k7 = decimal.Decimal('2') / 90;  # IH->HH
+k8 = decimal.Decimal('0') / 90;  # HI->II
+k9 = decimal.Decimal('0') / 90  # HD->ID
+k10 = decimal.Decimal('0') / 360  # ID->DD
+k11 = decimal.Decimal('0') / 360  # II->DI
 
 # Глобальные переменные реализации модели
 R = nol0;  # глобальная переменная с R

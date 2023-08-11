@@ -9,7 +9,7 @@ from service import *
 import datetime
 letConfigFromFile=True;
 nrows = None;
-continuedVer = '1.18_GBO_x2'
+continuedVer = '3_pharma_stopper_interact'
 # Вводные данные
 
 
@@ -22,7 +22,7 @@ def showGraph(FetaD_array, configs=False):
         Y = configs['Y']
         N_I = configs['N_I']
         xlimits = configs['xlimits']
-        xlimits = [0, 60*25]
+        xlimits = [0, 60*20]
 
     def formatOx(x, pos):
         delta = datetime.timedelta(minutes=float(x))
